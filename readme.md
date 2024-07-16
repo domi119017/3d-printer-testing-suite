@@ -1,5 +1,5 @@
 # Fully customizable (FFF/FDM) 3D printer testing suite
-![default settings](img/all.jpg)
+![default settings](img/3d-printer-testing-suite.png)
 ## Introduction
 This is a fully customizable 3D printer testing suite including tests for stringing, tolerance, small features, bridging, overhangs, dimensional accuracy and radii.
 Some of these tests focus more on machine capability while others are influenced more by filament choice.
@@ -26,7 +26,7 @@ Packing is used if you want to generate some of the models but not all of them. 
 - packing rotation: Changes the order of directions in which objects are packed. Can be useful if something is packed inefficiently.
 - sorting method: Changes order of objects while packing. Descending = largest object in the middle, ascending = smallest object in the middle.
 ### Stringing
-![stringing](img/stringing.jpg)
+![stringing](img/stringing.png)
 
 - tower count x: Number of towers in X direction
 - tower count y: Number of towers in Y direction
@@ -35,7 +35,7 @@ Packing is used if you want to generate some of the models but not all of them. 
 - bottom extrusions: Number of extrusions at the bottom of the tower
 - tower height: Height of the towers
 ### Overhang
-![overhang](img/overhang.jpg)
+![overhang](img/overhang.png)
 
 - start angle: Start angle of the overhang test
 - end angle: End angle of the overhang test
@@ -44,7 +44,7 @@ Packing is used if you want to generate some of the models but not all of them. 
 - extra layers on top: Number of extra layers on top of the overhang test
 - length: Length of the overhang test
 ### Peg/Hole
-![peg/hole](img/peg-hole.jpg)
+![peg/hole](img/peg_hole.png)
 
 This test generates very small pegs and holes to test how well you are able to reproduce those features. You should be able to print a peg with diameter of 2 extrusions.
 - min size: Minimum peg/hole size in extrusions
@@ -53,7 +53,7 @@ This test generates very small pegs and holes to test how well you are able to r
 - height: Height of the test
 - min dist: Minimum distance between pegs/holes
 ### Bridging
-![bridging](img/bridging.jpg)
+![bridging](img/bridging.png)
 
 - start: Start length of the bridging test
 - end: End length of the bridging test
@@ -63,7 +63,7 @@ This test generates very small pegs and holes to test how well you are able to r
 - bridge width: Width of the bridges (I strongly recommend keeping this at 2, otherwise the slicer will generate top infill on the bridges)
 - gap: Gap between the bridges (edge to edge)
 ### Tolerance
-![tolerance](img/tolerance.jpg)
+![tolerance](img/tolerance.png)
 
 **If you encounter issues or warnings with this test, please read the disclaimer above.**
 - mode: Select between cube, cylinder or both
@@ -74,7 +74,7 @@ This test generates very small pegs and holes to test how well you are able to r
 - diameter: Diameter of the test hole without tolerance
 - height: Height of the test (Note: this only applies to the holes, the test cylinder&cube is always double the height)
 ### Sphere
-![sphere](img/sphere.jpg)
+![sphere](img/sphere.png)
 
 **If you encounter issues or warnings with this test, please read the disclaimer above.**
 The necessity of this test is debatable, but it can be useful to tune adaptive layer height quality settings and as 3D printers in general struggle with spheres.
@@ -84,7 +84,7 @@ The necessity of this test is debatable, but it can be useful to tune adaptive l
 - step: Size step
 - gap: Gap between the test objects
 ### Dimensional accuracy
-![dimensional accuracy](img/accuracy.jpg)
+![dimensional accuracy](img/accuracy.png)
 
 **Please do not use this test to tune your steps/mm. This is only intended to verify dimensional accuracy. To calibrate your steps/mm I recommend the [cauliflower calibration](https://www.printables.com/model/682023-califlower-calibration-stl-calculator) by @AdamVector3D**
 - mode: Select between cube, cylinder or both
