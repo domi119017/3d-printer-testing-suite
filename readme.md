@@ -1,5 +1,5 @@
 # Fully customizable (FFF/FDM) 3D printer testing suite
-![default settings](img/3d-printer-testing-suite.png)
+![default settings](img/cover.png)
 ## Introduction
 This is a fully customizable 3D printer testing suite including tests for stringing, tolerance, small features, bridging, overhangs, dimensional accuracy and radii.
 Some of these tests focus more on machine capability while others are influenced more by filament choice.
@@ -22,6 +22,7 @@ I did this to learn OpenSCAD and as such the quality of the code is rather bad. 
 - test type: Select a single test or generate all at once
 ### Packing
 Packing is used if you want to generate some of the models but not all of them. If enabled it will overwrite the test type setting from general. Just check which tests you need.
+
 ![packing](img/packed.png)
 - pack objects: enable/disable
 - packing rotation: Changes the order of directions in which objects are packed. Can be useful if something is packed inefficiently.
@@ -96,6 +97,56 @@ The necessity of this test is debatable, but it can be useful to tune adaptive l
 - text depth: Depth of the text on the test objects
 ### Text size test
 ![text size](img/text.png)
+Can be used to test at which size text is too small to be legible.
+<!-- /* [Text size test settings] */
+// Test string
+ts_string = "Lorem ipsum";
+// Text size start (mm)
+ts_start = 5; // 0.5
+// Text size end (mm)
+ts_end = 10; // 0.5
+// Text size step (mm)
+ts_step = 2.5; // 0.5
+// Text depth (layers)
+ts_depth = 3; // 1
+// Minimum distance between text (extrusions)
+ts_min_dist = 3; // 1
+/* [Text size test advanced settings] */
+// Scaling factor view (Enable to adjust scaling factor)
+ts_adv_scaling_factor_view = false;
+// Font (If you change this, you will need to adjust the width scaling factor using the scaling factor view until the box has equal spacing around the text)
+ts_adv_font = "Liberation Mono:style=Regular";
+// Text width scaling factor (Default value works for Liberation Mono Regular)
+ts_adv_width_scaling = 0.835; //0.005
+// Height scaling factor (You should not need to change this, afaik actual text height is always 1.5 times the size)
+ts_adv_height_scaling = 1.5; //0.005 -->
+- ts string: Text to be displayed
+- ts start: Start size
+- ts end: End size
+- ts step: Size step
+- ts depth: Depth of the text
+- ts min dist: Minimum distance between text
+#### Advanced settings
+- ts adv scaling factor view: Enable to adjust scaling factor
+- ts adv font: Font to be used
+- ts adv width scaling: Width scaling factor
+- ts adv height scaling: Height scaling factor (You should not need to change this)
+#### Text width scaling factor
+If you change the font, you will need to adjust the width scaling factor using the scaling factor view until the box has equal spacing around the text.
+- This is too small: ![too small](img/text_width_scaling_small.png)
+- This is too large: ![too large](img/text_width_scaling_big.png)
+- This is correct: ![just right](img/text_width_scaling.png)
+
+### Bed leveling
+![bed leveling](img/bed_level.png)
+Used to test if your bed is level.
+- bed size x: Bed size in X direction
+- bed size y: Bed size in Y direction
+- bed level test mode: Select between spot, line or both
+- bed level spot size: Size of the spots
+- bed level line width: Width of the lines in extrusions
+- bed level padding: Padding to the edge of the bed
+- bed level divisions: Number of spots/lines
 
 ## Contributing
 If you have any suggestions or improvements, feel free to open an issue or a pull request on the github repository or send me a message on makerworld.
