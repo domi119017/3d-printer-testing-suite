@@ -739,9 +739,14 @@ module accuracy_test(){
 
 module text_test_single(size, debug = false) {
 	text_width = size*len(str(size, ": ",ts_string))*ts_adv_width_scaling;
-	if (debug)
+	if (debug){
 		%cube([text_width, size*ts_adv_height_scaling, ts_depth*layer_height], center=true);
-	text(str(size, ": ",ts_string), size=size, font=ts_adv_font, halign="center", valign="center");
+		linear_extrude(height=layer_height)
+		text(str(size, ": ",ts_string), size=size, font=ts_adv_font, halign="center", valign="center");
+	}
+	else {
+		text(str(size, ": ",ts_string), size=size, font=ts_adv_font, halign="center", valign="center");
+	}
 }
 
 

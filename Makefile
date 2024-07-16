@@ -11,19 +11,23 @@ SCADFILES:=$(wildcard $(SRCDIR)/*.scad)
 STLFILES:=$(patsubst $(SRCDIR)/%.scad,$(STLDIR)/%.stl,$(SCADFILES))
 IMGFILES:=$(patsubst $(SRCDIR)/%.scad,$(IMGDIR)/%.png,$(SCADFILES))
 
-all: clean stl img
+all: stl img
 
 stl: ${STLFILES}
 
 img: ${IMGFILES}
 
 ${STLDIR}/%.stl: ${SRCDIR}/%.scad
-	$(OPENSCAD_PATH) -o $@ $<
+	$(OPENSCAD_PATH) -o $@ --export-format binstl $<
 
 ${IMGDIR}/%.png: ${SRCDIR}/%.scad
 	$(OPENSCAD_PATH) -o $@ $<
 
 clean:
 	rm -f ${STLFILES}
+	rm -f ${IMGFILES}
 
-.PHONY: all clean
+version:
+	$(OPENSCAD_PATH) --version
+
+.PHONY: all stl img clean
