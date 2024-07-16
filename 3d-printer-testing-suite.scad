@@ -23,7 +23,7 @@ pack_objects = false;
 // Object rotation (useful if objects are not getting densely packed)
 pack_rotation = 0; // [0, 1, 2, 3]
 // Sorting method for packing
-pack_sorting = "descending"; // [ascending, descending, off]
+pack_sorting = "ascending"; // [ascending, descending, off]
 // Enable stringing
 pack_stringing = true;
 // Enable overhang
@@ -230,7 +230,7 @@ function gauss_with_step_and_factor(a,b,step,factor) = (
  */
 
 // [object_list, object_sizes, mask]
-function quicksort_objs_by_size_ascending(objects_combined) = !(len(objects_combined[0])>0) ? [] : let(
+function quicksort_objs_by_size_ascending(objects_combined) = !(len(objects_combined)>0) ? [] : let(
     pivot   = abs(objects_combined[floor(len(objects_combined)/2)][1][0])*abs(objects_combined[floor(len(objects_combined)/2)][1][1]),
     lesser  = [ for (y = objects_combined) if (abs(y[1][0])*abs(y[1][1])  < pivot) y ],
 	equal   = [ for (y = objects_combined) if (abs(y[1][0])*abs(y[1][1]) == pivot) y ],
