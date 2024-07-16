@@ -6,7 +6,6 @@ extrusion_width = 0.42; // 0.01
 // Slice gap closing radius (mm)
 slice_gap_closing_radius = 0.049; // 0.001
 
-
 /* [General settings] */
 // Number of bottom layers
 test_bottom_layers = 3; // 1
@@ -16,6 +15,8 @@ test_padding = 6; // 1
 detail_level=35; // 5
 // Test type
 test_type = "common"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text, bed_level]
+// Color scheme, see en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#color for available colors
+color_scheme = ["red", "green", "blue", "cyan", "magenta", "yellow", "darkorange", "lime", "steelblue"];
 
 /* [Packing settings] */
 // Enable object packing (Useful if you only want to run some of the tests, overwrites any other selection in general.)
@@ -41,7 +42,6 @@ pack_accuracy = true;
 // Enable text size 
 pack_text = true;
 
-
 /* [Stringing test settings] */
 // Number of towers in X
 stringing_tower_count_x = 3; // 1
@@ -56,7 +56,6 @@ stringing_test_bottom_extrusions = 3; // 1
 // Height of the towers (mm)
 stringing_tower_height = 10; // 2.5
 
-
 /* [Overhang test settings] */
 // Test start angle (degrees)
 overhang_test_start_angle = 45; // 5
@@ -70,7 +69,6 @@ overhang_test_height = 10; // 1
 overhang_test_extra_layers = 2; // 1
 // Test length (mm)
 overhang_test_length = 10; // 0.5
-
 
 /* [Peg/Hole test settings] */
 // Minimum peg size (extrusions)
@@ -128,7 +126,6 @@ sphere_test_step = 5; // 1
 // Sphere test gap size (extrusions)
 sphere_test_gap = 3; // 1
 
-
 /* [Dimensional accuracy test settings] */
 // Dimensional accuracy test mode
 dimensional_accuracy_test_mode = "both"; // [both, cube, cylinder]
@@ -142,7 +139,6 @@ dimensional_accuracy_test_step = 10; // 5
 dimensional_accuracy_test_gap = 3; // 1
 // Text depth (layers)
 dimensional_accuracy_test_text_depth = 3; // 1
-
 
 /* [Text size test settings] */
 // Test string
@@ -171,7 +167,6 @@ ts_adv_width_scaling = 0.835; //0.005
 // Height scaling factor (You should not need to change this, afaik actual text height is always 1.5 times the size)
 ts_adv_height_scaling = 1.5; //0.005
 
-
 /* [Bed level test settings] */
 // Bed size x (mm)
 bed_size_x = 255; 
@@ -188,7 +183,6 @@ bed_level_padding = 15; // 1
 // Number of spots&lines
 bed_level_divisions = 5; // 1
 
-
 /* [Hidden] */
 
 // ========== Helper Functions ==========
@@ -196,7 +190,6 @@ function largest_in_blocker_array_x(arr) = max([for (i = [0:len(arr)-1]) arr[i][
 function smallest_in_blocker_array_x(arr) = min([for (i = [0:len(arr)-1]) arr[i][0][0]]);
 function largest_in_blocker_array_y(arr) = max([for (i = [0:len(arr)-1]) arr[i][1][1]]);
 function smallest_in_blocker_array_y(arr) = min([for (i = [0:len(arr)-1]) arr[i][0][1]]);
-
 
 /* 
 	* Adjusted gaussian sum:
@@ -273,7 +266,6 @@ _tol_size_mult = tolerance_test_mode == "both" ? 2 : 1;
 // Accuracy
 _dim_mult = dimensional_accuracy_test_mode == "both" ? 1 : 0;
 
-
 // ========== Sizes ==========
 stringing_test_size = [
 	(stringing_tower_count_x-1)*(stringing_tower_min_dist + _stringing_bottom_width)+_stringing_bottom_width,
@@ -329,14 +321,10 @@ text_test_size = [
 	ts_depth*layer_height
 ];
 
-
 // Packing
 object_list = ["stringing", "overhang", "peg_hole", "bridging", "tolerance", "sphere", "accuracy", "text"];
 object_sizes = [stringing_test_size, overhang_test_size, peg_hole_test_size, bridging_test_size, tolerance_test_size, sphere_test_size, accuracy_test_size, text_test_size];
 mask = [pack_stringing == true ? 1:0, pack_overhang == true ? 1:0, pack_peg_hole == true ? 1:0, pack_bridging == true ? 1:0, pack_tolerance == true ? 1:0, pack_sphere == true ? 1:0, pack_accuracy == true ? 1:0, pack_text == true ? 1:0];
-
-
-
 
 module stringing_tower_single() {
 	polyhedron_points = [
@@ -370,8 +358,6 @@ module stringing_test() {
 		}
 	}
 }
-
-
 
 module overhang_single(angle) {
 	polyhedron_points = [
@@ -411,8 +397,6 @@ module overhang_test() {
 		}
 	}
 }
-
-
 
 module peg_single(size, height=peg_hole_test_height*layer_height) {
 	if (size < slice_gap_closing_radius) {
@@ -461,9 +445,6 @@ module peg_hole_test() {
 	}
 }
 
-
-
-
 module bridge_single(length) {
 	cube([bridging_test_bridge_width*extrusion_width, bridging_test_bridge_width*extrusion_width, bridging_test_tower_height*layer_height ]);
 	translate([length+extrusion_width*bridging_test_bridge_width,0,0]){
@@ -483,8 +464,6 @@ module bridging_test(){
 		}
 	}
 }
-
-
 
 module tolerance_single_round(diameter, tolerance) {
 	translate([
@@ -599,9 +578,6 @@ module tolerance_test() {
 	}
 }
 
-
-
-
 module sphere_test_bowl(size) {
 	echo(str("Generating bowl, size: ", size));
 	difference(){
@@ -653,7 +629,6 @@ module sphere_test() {
 		}
 	}
 }
-
 
 // Dimensional accuracy test
 
@@ -735,15 +710,17 @@ module accuracy_test(){
 	}
 }
 
-
-
 module text_test_single(size, debug = false) {
 	text_width = size*len(str(size, ": ",ts_string))*ts_adv_width_scaling;
-	if (debug)
+	if (debug){
 		%cube([text_width, size*ts_adv_height_scaling, ts_depth*layer_height], center=true);
-	text(str(size, ": ",ts_string), size=size, font=ts_adv_font, halign="center", valign="center");
+		linear_extrude(height=layer_height)
+		text(str(size, ": ",ts_string), size=size, font=ts_adv_font, halign="center", valign="center");
+	}
+	else {
+		text(str(size, ": ",ts_string), size=size, font=ts_adv_font, halign="center", valign="center");
+	}
 }
-
 
 module text_test() {
 	echo("Generating text test");
@@ -782,8 +759,6 @@ module text_test() {
 		}
 	}
 }
-
-
 
 module bed_level_test(){
 	do_spots = bed_level_test_mode == "spot" || bed_level_test_mode == "both";
@@ -840,35 +815,35 @@ module bed_level_test(){
 
 module place_debug(test_type){
 	if (test_type == "stringing"){
-		color("blue") stringing_test();
+		color(color_scheme[0%len(color_scheme)]) stringing_test();
 		%cube([stringing_test_size[0], stringing_test_size[1], stringing_test_size[2]]);
 	}
 	if (test_type == "overhang"){
-		color("red") overhang_test();
+		color(color_scheme[1%len(color_scheme)]) overhang_test();
 		%cube([overhang_test_size[0], overhang_test_size[1], overhang_test_size[2]]);
 	}
 	if (test_type == "peg_hole"){
-		color("green") peg_hole_test();
+		color(color_scheme[2%len(color_scheme)]) peg_hole_test();
 		%cube([peg_hole_test_size[0], peg_hole_test_size[1], peg_hole_test_size[2]]);
 	}
 	if (test_type == "bridging"){
-		color("magenta") bridging_test();
+		color(color_scheme[3%len(color_scheme)]) bridging_test();
 		%cube([bridging_test_size[0], bridging_test_size[1], bridging_test_size[2]]);
 	}
 	if (test_type == "tolerance"){
-		color("yellow") tolerance_test();
+		color(color_scheme[4%len(color_scheme)]) tolerance_test();
 		%cube([tolerance_test_size[0], tolerance_test_size[1], tolerance_test_size[2]]);
 	}
 	if (test_type == "sphere"){
-		color("cyan") sphere_test();
+		color(color_scheme[5%len(color_scheme)]) sphere_test();
 		%cube([sphere_test_size[0], sphere_test_size[1], sphere_test_size[2]]);
 	}
 	if (test_type == "accuracy") {
-		color("orange") accuracy_test();
+		color(color_scheme[6%len(color_scheme)]) accuracy_test();
 		%cube([accuracy_test_size[0], accuracy_test_size[1], accuracy_test_size[2]]);
 	}
 	if (test_type == "text") {
-		color("purple") text_test();
+		color(color_scheme[7%len(color_scheme)]) text_test();
 		%cube([text_test_size[0], text_test_size[1], text_test_size[2]]);
 	}
 }
@@ -885,7 +860,6 @@ module debug_blocker(blocker, object_size){
 }
 
 module pack_objects(object_list, object_sizes, blockers, masks){
-	echo(str("============ Object: ", object_list[0], " ============"));
 	object = object_list[0];
 	object_size = object_sizes[0];
 	mask = masks[0];
@@ -1050,37 +1024,40 @@ module pack_objects(object_list, object_sizes, blockers, masks){
 	}
 }
 
-//test
-
 module place_with_bottom(test_type) {
 	echo(str("============ Object: ", test_type, " ============"));
 	if (test_type == "stringing"){
-		color("blue") translate([0,0, test_bottom_layers*layer_height]) stringing_test();
-		color("blue") translate([-test_padding/2*extrusion_width,-test_padding/2*extrusion_width,0]) cube([stringing_test_size[0]+test_padding*extrusion_width, stringing_test_size[1]+test_padding*extrusion_width, test_bottom_layers*layer_height]);
+		c = color_scheme[0%len(color_scheme)];
+		color(c) translate([0,0, test_bottom_layers*layer_height]) stringing_test();
+		color(c) translate([-test_padding/2*extrusion_width,-test_padding/2*extrusion_width,0]) cube([stringing_test_size[0]+test_padding*extrusion_width, stringing_test_size[1]+test_padding*extrusion_width, test_bottom_layers*layer_height]);
 	}
 	if (test_type == "overhang"){
-		color("red") translate([0,0,test_bottom_layers*layer_height]) overhang_test();
-		color("red") translate([-test_padding/2*extrusion_width,-test_padding/2*extrusion_width,0]) cube([overhang_test_size[0]+test_padding*extrusion_width, overhang_test_size[1]+test_padding*extrusion_width, test_bottom_layers*layer_height]);
+		c = color_scheme[1%len(color_scheme)];
+		color(c) translate([0,0,test_bottom_layers*layer_height]) overhang_test();
+		color(c) translate([-test_padding/2*extrusion_width,-test_padding/2*extrusion_width,0]) cube([overhang_test_size[0]+test_padding*extrusion_width, overhang_test_size[1]+test_padding*extrusion_width, test_bottom_layers*layer_height]);
 	}
 	if (test_type == "peg_hole"){
-		color("green") translate([0,0,test_bottom_layers*layer_height]) peg_hole_test();
-		color("green") translate([-test_padding/2*extrusion_width,-test_padding/2*extrusion_width,0]) cube([peg_hole_test_size[0]+test_padding*extrusion_width, peg_hole_test_size[1]+test_padding*extrusion_width, test_bottom_layers*layer_height]);
+		c = color_scheme[2%len(color_scheme)];
+		color(c) translate([0,0,test_bottom_layers*layer_height]) peg_hole_test();
+		color(c) translate([-test_padding/2*extrusion_width,-test_padding/2*extrusion_width,0]) cube([peg_hole_test_size[0]+test_padding*extrusion_width, peg_hole_test_size[1]+test_padding*extrusion_width, test_bottom_layers*layer_height]);
 	}
 	if (test_type == "bridging"){
-		color("magenta") translate([0,0,test_bottom_layers*layer_height]) bridging_test();
-		color("magenta") translate([-test_padding/2*extrusion_width,-test_padding/2*extrusion_width,0]) cube([bridging_test_size[0]+test_padding*extrusion_width, bridging_test_size[1]+test_padding*extrusion_width, test_bottom_layers*layer_height]);
+		c = color_scheme[3%len(color_scheme)];
+		color(c) translate([0,0,test_bottom_layers*layer_height]) bridging_test();
+		color(c) translate([-test_padding/2*extrusion_width,-test_padding/2*extrusion_width,0]) cube([bridging_test_size[0]+test_padding*extrusion_width, bridging_test_size[1]+test_padding*extrusion_width, test_bottom_layers*layer_height]);
 	}
 	if (test_type == "tolerance"){
-		color("yellow") translate([0,0,test_bottom_layers*layer_height]) tolerance_test();
-		color("yellow") translate([-test_padding/2*extrusion_width,-test_padding/2*extrusion_width,0]) cube([
+		c = color_scheme[4%len(color_scheme)];
+		color(c) translate([0,0,test_bottom_layers*layer_height]) tolerance_test();
+		color(c) translate([-test_padding/2*extrusion_width,-test_padding/2*extrusion_width,0]) cube([
 			tolerance_test_size[0]+test_padding*extrusion_width-(tolerance_test_end+tolerance_test_diameter+tolerance_test_gap*2*extrusion_width), 
 			tolerance_test_size[1]+test_padding*extrusion_width, 
 			test_bottom_layers*layer_height]);
 	}
 	if (test_type == "sphere"){
-		color("cyan") translate([0,0,test_bottom_layers*layer_height]) sphere_test();
-
-		color("cyan") 
+		c = color_scheme[5%len(color_scheme)];
+		color(c) translate([0,0,test_bottom_layers*layer_height]) sphere_test();
+		color(c) 
 		translate([
 			-(test_padding*extrusion_width)/2,
 			-(test_padding*extrusion_width)/2,
@@ -1092,13 +1069,15 @@ module place_with_bottom(test_type) {
 			test_bottom_layers*layer_height]);
 	}
 	if (test_type == "accuracy") {
-		color("orange") accuracy_test();
+		c = color_scheme[6%len(color_scheme)];
+		color(c) accuracy_test();
 	}
 	if (test_type == "text") {
-		color("purple") 
+		c = color_scheme[7%len(color_scheme)];
+		color(c) 
 		translate([0,0,test_bottom_layers*layer_height]) 
 		text_test();
-		color("purple") 
+		color(c) 
 		translate([
 			-test_padding/2*extrusion_width,
 			-test_padding/2*extrusion_width,
@@ -1153,13 +1132,11 @@ module place_with_bottom(test_type) {
 	}
 }
 
-
 $fn = detail_level;
 // Viewport settings for debugging
 // $vpt = test_type == "debug" ? [75,172,10] : $vpt;
 // $vpr = test_type == "debug" ? [55,0,60] : $vpr;
 // $vpd = test_type == "debug" ? 550 : $vpd;
-
 
 if (ts_adv_scaling_factor_view) {
 	text_test_single(ts_end, debug = true);
@@ -1185,7 +1162,7 @@ echo("=======Finished=======");
 // Tolerance
 if ((tolerance_test_start/tolerance_test_step)%1 != 0 || (tolerance_test_end/tolerance_test_step)%1 != 0) {
 	echo("WARNING: Tolerance test start and end must be divisible by step, otherwise the test might use too much space for the bottom layers.");
-} // This warning sometimes throws a false alarm because of floating point precision, but it's better to have it than not.
+}
 
 if ((tolerance_test_end/tolerance_test_start)%1 != 0) {
 	echo("WARNING: Tolerance test end is not divisible by start, the test might use too much space for the bottom layers.");

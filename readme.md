@@ -22,6 +22,7 @@ I did this to learn OpenSCAD and as such the quality of the code is rather bad. 
 - test type: Select a single test or generate all at once
 ### Packing
 Packing is used if you want to generate some of the models but not all of them. If enabled it will overwrite the test type setting from general. Just check which tests you need.
+![packing](img/packed.png)
 - pack objects: enable/disable
 - packing rotation: Changes the order of directions in which objects are packed. Can be useful if something is packed inefficiently.
 - sorting method: Changes order of objects while packing. Descending = largest object in the middle, ascending = smallest object in the middle.
@@ -93,5 +94,8 @@ The necessity of this test is debatable, but it can be useful to tune adaptive l
 - step: Size step
 - gap: Gap between the test objects
 - text depth: Depth of the text on the test objects
+### Text size test
+![text size](img/text.png)
+
 ## Contributing
 If you have any suggestions or improvements, feel free to open an issue or a pull request on the github repository or send me a message on makerworld.
