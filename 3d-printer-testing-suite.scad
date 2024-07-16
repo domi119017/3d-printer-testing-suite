@@ -15,7 +15,7 @@ test_padding = 6; // 1
 // Arc segments (higher = smoother curves)
 detail_level=35; // 5
 // Test type
-test_type = "debug"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text]
+test_type = "common"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text, bed_level]
 
 /* [Packing settings] */
 // Enable object packing (Useful if you only want to run some of the tests, overwrites any other selection in general.)
@@ -170,6 +170,24 @@ ts_adv_font = "Liberation Mono:style=Regular";
 ts_adv_width_scaling = 0.835; //0.005
 // Height scaling factor (You should not need to change this, afaik actual text height is always 1.5 times the size)
 ts_adv_height_scaling = 1.5; //0.005
+
+
+/* [Bed level test settings] */
+// Bed size x (mm)
+bed_size_x = 255; 
+// Bed size y (mm)
+bed_size_y = 255;
+// Test pattern
+bed_level_test_mode = "both"; // [spot, line, both]
+// Spot size (mm)
+bed_level_spot_size = [10,10];
+// Line width (extrusions)
+bed_level_line_width = 3; // 1
+// Padding to edge of bed (mm)
+bed_level_padding = 15; // 1
+// Number of spots&lines
+bed_level_divisions = 5; // 1
+
 
 /* [Hidden] */
 
@@ -767,6 +785,59 @@ module text_test() {
 
 
 
+module bed_level_test(){
+	do_spots = bed_level_test_mode == "spot" || bed_level_test_mode == "both";
+	do_lines = bed_level_test_mode == "line" || bed_level_test_mode == "both";
+	linewidth = bed_level_line_width*extrusion_width;
+	divs = bed_level_divisions-1;
+	spot_spacing = [
+		(bed_size_x-bed_level_padding*2-bed_level_spot_size[0])/divs,
+		(bed_size_y-bed_level_padding*2-bed_level_spot_size[1])/divs
+	];
+	line_length = do_spots ? [
+		bed_size_x-bed_level_padding*2-bed_level_spot_size[0],
+		bed_size_y-bed_level_padding*2-bed_level_spot_size[1]
+	] : [
+		bed_size_x-bed_level_padding*2,
+		bed_size_y-bed_level_padding*2
+	];
+	union() {
+		if (do_spots) {
+			for (x=[0:divs]){
+				for (y=[0:divs]){
+					translate([
+						spot_spacing[0]*(x-(floor(divs/2))),
+						spot_spacing[1]*(y-(floor(divs/2))),
+						0
+					]){
+						cube([bed_level_spot_size[0],bed_level_spot_size[1],layer_height],center=true);
+					}
+				}
+			}
+		}
+		if (do_lines) {
+			for (i=[0:divs]){
+				translate([
+					0,
+					do_spots ? spot_spacing[1]*(i-(floor(divs/2))) : (spot_spacing[1]+(bed_level_spot_size[1]-bed_level_line_width*extrusion_width)/2)*(i-(floor(divs/2))) ,
+					0
+				]){
+					cube([line_length[0],linewidth,layer_height], center=true);
+				} 
+			}
+			for (i=[0:divs]){
+				translate([
+					do_spots ? spot_spacing[0]*(i-(floor(divs/2))) : (spot_spacing[0]+(bed_level_spot_size[0]-bed_level_line_width*extrusion_width)/2)*(i-(floor(divs/2))),
+					0,
+					0
+				]){
+					cube([linewidth,line_length[1],layer_height], center=true);
+				} 
+			}
+		}
+	}
+}
+
 module place_debug(test_type){
 	if (test_type == "stringing"){
 		color("blue") stringing_test();
@@ -1092,6 +1163,9 @@ $fn = detail_level;
 
 if (ts_adv_scaling_factor_view) {
 	text_test_single(ts_end, debug = true);
+}
+else if (test_type=="bed_level"){
+	bed_level_test();
 }
 else if (pack_objects) {
 	object_lists_combined = [object_list, object_sizes, mask];
