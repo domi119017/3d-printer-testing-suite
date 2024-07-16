@@ -979,6 +979,8 @@ module pack_objects(object_list, object_sizes, blockers, masks){
 	}
 }
 
+//test
+
 module place_with_bottom(test_type) {
 	echo(str("============ Object: ", test_type, " ============"));
 	if (test_type == "stringing"){
