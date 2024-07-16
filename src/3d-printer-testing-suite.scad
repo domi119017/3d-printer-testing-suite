@@ -156,8 +156,8 @@ ts_depth = 3; // 1
 // Minimum distance between text (extrusions)
 ts_min_dist = 3; // 1
 /* [Text size test advanced settings] */
-// Minimum wall thickness (extrusions) (vertical mode)
-ts_adv_min_wall_thickness = 5; // 1
+// // Minimum wall thickness (extrusions) (vertical mode)
+// ts_adv_min_wall_thickness = 5; // 1
 // Scaling factor view (Enable to adjust scaling factor)
 ts_adv_scaling_factor_view = false;
 // Font (If you change this, you will need to adjust the width scaling factor using the scaling factor view until the box has equal spacing around the text)
@@ -714,7 +714,7 @@ module text_test_single(size, debug = false) {
 	text_width = size*len(str(size, ": ",ts_string))*ts_adv_width_scaling;
 	if (debug){
 		%cube([text_width, size*ts_adv_height_scaling, ts_depth*layer_height], center=true);
-		linear_extrude(height=layer_height)
+		color(color_scheme[7%len(color_scheme)]) linear_extrude(height=layer_height)
 		text(str(size, ": ",ts_string), size=size, font=ts_adv_font, halign="center", valign="center");
 	}
 	else {

@@ -21,7 +21,7 @@ ${STLDIR}/%.stl: ${SRCDIR}/%.scad
 	$(OPENSCAD_PATH) -o $@ --export-format binstl $<
 
 ${IMGDIR}/%.png: ${SRCDIR}/%.scad
-	$(OPENSCAD_PATH) -o $@ $<
+	$(OPENSCAD_PATH) -o $@ --imgsize 1920,1440 $<
 
 clean:
 	rm -f ${STLFILES}
