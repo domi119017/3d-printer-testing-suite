@@ -15,7 +15,7 @@ test_padding = 6; // 1
 // Arc segments (higher = smoother curves)
 detail_level=35; // 5
 // Test type
-test_type = "common"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text]
+test_type = "debug"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text]
 
 /* [Packing settings] */
 // Enable object packing (Useful if you only want to run some of the tests, overwrites any other selection in general.)
