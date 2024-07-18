@@ -68,6 +68,7 @@ This test generates very small pegs and holes to test how well you are able to r
 ![tolerance](build/img/tolerance.png)
 
 **If you encounter issues or warnings with this test, please read the disclaimer above.**
+Note: with tolerance x the actual size of the hole will be 2x the tolerance. This is because the tolerance is applied to both sides of the hole.
 - mode: Select between cube, cylinder or both
 - start: Start tolerance
 - end: End tolerance
@@ -98,28 +99,6 @@ The necessity of this test is debatable, but it can be useful to tune adaptive l
 ### Text size test
 ![text size](build/img/text.png)
 Can be used to test at which size text is too small to be legible.
-<!-- /* [Text size test settings] */
-// Test string
-ts_string = "Lorem ipsum";
-// Text size start (mm)
-ts_start = 5; // 0.5
-// Text size end (mm)
-ts_end = 10; // 0.5
-// Text size step (mm)
-ts_step = 2.5; // 0.5
-// Text depth (layers)
-ts_depth = 3; // 1
-// Minimum distance between text (extrusions)
-ts_min_dist = 3; // 1
-/* [Text size test advanced settings] */
-// Scaling factor view (Enable to adjust scaling factor)
-ts_adv_scaling_factor_view = false;
-// Font (If you change this, you will need to adjust the width scaling factor using the scaling factor view until the box has equal spacing around the text)
-ts_adv_font = "Liberation Mono:style=Regular";
-// Text width scaling factor (Default value works for Liberation Mono Regular)
-ts_adv_width_scaling = 0.835; //0.005
-// Height scaling factor (You should not need to change this, afaik actual text height is always 1.5 times the size)
-ts_adv_height_scaling = 1.5; //0.005 -->
 - ts string: Text to be displayed
 - ts start: Start size
 - ts end: End size
@@ -146,6 +125,14 @@ If you change the font, you will need to adjust the width scaling factor using t
 - chimney hole start diameter: Start diameter of the hole (mm)
 - chimney hole end diameter: End diameter of the hole (mm)
 - chimney hole diameter step: Diameter step of the hole (mm)
+
+### Support test
+![support](build/img/support.png)
+![support-underside](build/img/support-underside.png)
+
+Basic test object with adjustable size for testing support and support interface quality.
+- support cube size: Size of the base in mm
+- support cube height: Height of the cube in mm
 
 ### Bed leveling
 ![bed leveling](build/img/bed_level.png)

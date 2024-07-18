@@ -17,7 +17,7 @@ detail_level=64; // 5
 // Preview mode (Reduces arc segments to 16 for faster rendering. TURN OFF BEFORE EXPORTING)
 preview_mode = false;
 // Test type
-test_type = "common"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text, chimney, bed_level]
+test_type = "common"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text, chimney, support, bed_level]
 // Color scheme, see en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#color for available colors
 color_scheme = ["red", "green", "blue", "cyan", "magenta", "yellow", "darkorange", "lime", "steelblue"];
 
@@ -46,6 +46,8 @@ pack_accuracy = true;
 pack_text = true;
 // Enable chimney
 pack_chimney = true;
+// Enable support
+pack_support = true;
 
 /* [Stringing test settings] */
 // Number of towers in X
@@ -195,6 +197,11 @@ chimney_hole_end_diameter = 5; // 1
 // Chimney hole diameter step (mm)
 chimney_hole_diameter_step = 1; // 1
 
+/* [Support test settings] */
+// Support test size (mm) - Sets the size of the base
+support_cube_size = 10; //1
+// Sets the total height of the cube
+support_cube_height = 10;
 
 /* [Bed level test settings] */
 // Bed size x (mm)
@@ -792,6 +799,30 @@ chimney_test_size = [
 	chimney_hole_end_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2,
 	(chimney_base_height+chimney_top_height)*layer_height
 ];/* END chimney-test.scad*/
+/* START support-test.scad*/
+module support_test(size){
+	union(){
+		difference(){
+			union() {
+				cube([size,size,support_cube_height/2]);
+				translate([0,0,support_cube_height/2])
+				cube([size,size,support_cube_height/2]);
+			}
+			translate([size/2,size/2,-slice_gap_closing_radius/2]){
+				cylinder(r=size/6,h=support_cube_height/2+slice_gap_closing_radius);
+				cylinder(r=size/3,h=support_cube_height/4+slice_gap_closing_radius);
+			}
+			translate([-slice_gap_closing_radius/2,-slice_gap_closing_radius/2,support_cube_height/2])
+			cube([size+slice_gap_closing_radius,size*2/3+slice_gap_closing_radius,support_cube_height/4]);
+		}
+	}
+}
+
+support_test_size = [
+	support_cube_size,
+	support_cube_size,
+	support_cube_height
+];/* END support-test.scad*/
 /* START bed-level-test.scad*/
 module bed_level_test(){
 	do_spots = bed_level_test_mode == "spot" || bed_level_test_mode == "both";
@@ -957,9 +988,9 @@ function sort_objects_descending(object_list, object_sizes, mask) = _split_back_
 
 
 // Packing
-object_list = ["stringing", "overhang", "peg_hole", "bridging", "tolerance", "sphere", "accuracy", "text", "chimney"];
-object_sizes = [stringing_test_size, overhang_test_size, peg_hole_test_size, bridging_test_size, tolerance_test_size, sphere_test_size, accuracy_test_size, text_test_size, chimney_test_size];
-mask = [pack_stringing == true ? 1:0, pack_overhang == true ? 1:0, pack_peg_hole == true ? 1:0, pack_bridging == true ? 1:0, pack_tolerance == true ? 1:0, pack_sphere == true ? 1:0, pack_accuracy == true ? 1:0, pack_text == true ? 1:0, pack_chimney == true ? 1:0];
+object_list = ["stringing", "overhang", "peg_hole", "bridging", "tolerance", "sphere", "accuracy", "text", "chimney", "support"];
+object_sizes = [stringing_test_size, overhang_test_size, peg_hole_test_size, bridging_test_size, tolerance_test_size, sphere_test_size, accuracy_test_size, text_test_size, chimney_test_size, support_test_size];
+mask = [pack_stringing == true ? 1:0, pack_overhang == true ? 1:0, pack_peg_hole == true ? 1:0, pack_bridging == true ? 1:0, pack_tolerance == true ? 1:0, pack_sphere == true ? 1:0, pack_accuracy == true ? 1:0, pack_text == true ? 1:0, pack_chimney == true ? 1:0, pack_support == true ? 1:0];
 
 module place_debug(test_type){
 	if (test_type == "stringing"){
@@ -997,6 +1028,10 @@ module place_debug(test_type){
 	if (test_type == "chimney") {
 		color(color_scheme[8%len(color_scheme)]) chimney_test();
 		%cube([chimney_test_size[0], chimney_test_size[1], chimney_test_size[2]]);
+	}
+	if (test_type == "support") {
+		color(color_scheme[9%len(color_scheme)]) support_test(support_cube_size);
+		%cube([support_test_size[0], support_test_size[1], support_test_size[2]]);
 	}
 }
 
@@ -1255,6 +1290,11 @@ module place_with_bottom(test_type) {
 			chimney_test_size[1]+test_padding*extrusion_width,
 			test_bottom_layers*layer_height
 		]);
+	}
+	if (test_type == "support") {
+		c = color_scheme[9%len(color_scheme)];
+		color(c)
+		support_test(support_cube_size);
 	}
 	if (test_type == "common") {
 		place_with_bottom("stringing");

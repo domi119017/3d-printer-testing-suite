@@ -13,9 +13,11 @@ STLDIR:=$(BUILDDIR)/stl
 IMGDIR:=$(BUILDDIR)/img
 
 MAINFILE:=$(SRCDIR)/3d-printer-testing-suite.scad
+NOSTL:= cover support-underside text_width_scaling text_width_scaling_small text_width_scaling_big
 
 SETUPFILES:=$(wildcard $(SETUPDIR)/*.scad)
-STLFILES:=$(patsubst $(SETUPDIR)/%.scad,$(STLDIR)/%.stl,$(SETUPFILES))
+STLFILESUNFILTERED:=$(patsubst $(SETUPDIR)/%.scad,$(STLDIR)/%.stl,$(SETUPFILES))
+STLFILES:=$(filter-out $(patsubst %,$(STLDIR)/%.stl,$(NOSTL)),$(STLFILESUNFILTERED))
 IMGFILES:=$(patsubst $(SETUPDIR)/%.scad,$(IMGDIR)/%.png,$(SETUPFILES))
 
 COMMONARGS:=
