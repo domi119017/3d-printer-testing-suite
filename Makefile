@@ -2,22 +2,28 @@ OPENSCAD_PATH:=/usr/bin/openscad
 ifeq ($(OS),Windows_NT)
 	OPENSCAD_PATH:="C:/Program Files/OpenSCAD/openscad.com"
 endif
+
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+
 SRCDIR:=$(ROOT_DIR)/src
+SETUPDIR:=$(SRCDIR)/setups
+
 BUILDDIR:=$(ROOT_DIR)/build
 STLDIR:=$(BUILDDIR)/stl
 IMGDIR:=$(BUILDDIR)/img
 
-SCADFILES:=$(wildcard $(SRCDIR)/*.scad)
-STLFILES:=$(patsubst $(SRCDIR)/%.scad,$(STLDIR)/%.stl,$(SCADFILES))
-IMGFILES:=$(patsubst $(SRCDIR)/%.scad,$(IMGDIR)/%.png,$(SCADFILES))
+MAINFILE:=$(SRCDIR)/3d-printer-testing-suite.scad
+
+SETUPFILES:=$(wildcard $(SETUPDIR)/*.scad)
+STLFILES:=$(patsubst $(SETUPDIR)/%.scad,$(STLDIR)/%.stl,$(SETUPFILES))
+IMGFILES:=$(patsubst $(SETUPDIR)/%.scad,$(IMGDIR)/%.png,$(SETUPFILES))
 
 COMMONARGS:=
 STLARGS:=--export-format binstl
 IMGARGS:=--autocenter --viewall --projection o --colorscheme BeforeDawn
 
 all: IMGARGS+=--imgsize 1920,1440
-all: mkbuilddir stl img
+all: mkbuilddir stl img combined
 
 rebuild: clean all
 
@@ -35,13 +41,20 @@ img: ${IMGFILES}
 cleanimg:
 	rm -rf $(IMGDIR)
 
-${STLDIR}/%.stl: ${SRCDIR}/%.scad
+combined:
+	python $(ROOT_DIR)/openscad-projects/combine.py $(MAINFILE) > $(BUILDDIR)/combined.scad
+
+${STLDIR}/%.stl: ${SETUPDIR}/%.scad
 	$(OPENSCAD_PATH) -o $@ $(COMMONARGS) $(STLARGS) $<
 
-${IMGDIR}/%.png: ${SRCDIR}/%.scad
+${IMGDIR}/%.png: ${SETUPDIR}/%.scad
 	$(OPENSCAD_PATH) -o $@ $(COMMONARGS) $(IMGARGS) $<
 
-clean: cleanstl cleanimg
+${BUILDDIR}/%.ast : ${SRCDIR}/%.scad
+	$(OPENSCAD_PATH) -o $@ $(COMMONARGS) $<
+
+clean:
+	rm -rf $(BUILDDIR)/*
 
 mkbuilddir:
 	mkdir -p $(STLDIR)
@@ -58,9 +71,11 @@ help:
 	@echo "  preview:       Clean img & generate preview PNG files"
 	@echo "  stl:           Generate STL files"
 	@echo "  img:           Generate PNG files"
+	@echo "  ast:           Generate Abstract syntax tree"
 	@echo "  clean:         Remove build directory"
 	@echo "  cleanstl:      Remove only STL files"
 	@echo "  cleanimg:      Remove only PNG files"
+	@echo "  cleanast:      Remove only AST files"
 	@echo "  mkbuilddir:    Create build directory"
 	@echo "  version:       Show Make & OpenSCAD version"
 	@echo "  help:          Show this help message and OpenSCAD help"
@@ -69,4 +84,4 @@ help:
 	@$(OPENSCAD_PATH) --help
 
 
-.PHONY: all rebuild preview stl cleanstl img cleanimg mkbuilddir version help
+.PHONY: all rebuild preview stl cleanstl img cleanimg ast cleanast mkbuilddir version help

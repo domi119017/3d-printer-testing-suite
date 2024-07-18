@@ -1,3 +1,4 @@
+/* START 3d-printer-testing-suite.scad*/
 /* [Slicer settings] */
 // Layer height (mm)
 layer_height = 0.2; // 0.01
@@ -197,15 +198,571 @@ bed_level_divisions = 5; // 1
 /* [Hidden] */
 
 
-include <modules/stringing-test.scad>
-include <modules/overhang-test.scad>
-include <modules/peg-hole-test.scad>
-include <modules/bridging-test.scad>
-include <modules/tolerance-test.scad>
-include <modules/sphere-test.scad>
-include <modules/accuracy-test.scad>
-include <modules/text-test.scad>
-include <modules/bed-level-test.scad>
+/* START stringing-test.scad*/
+
+module stringing_tower_single() {
+	polyhedron_points = [
+		[0, 0, 0],
+		[0, _stringing_bottom_width, 0],
+		[_stringing_bottom_width, _stringing_bottom_width, 0],
+		[_stringing_bottom_width, 0, 0],
+		[_stringing_top_offset, _stringing_top_offset, stringing_tower_height],
+		[_stringing_top_offset, _stringing_bottom_width - _stringing_top_offset, stringing_tower_height],
+		[_stringing_bottom_width - _stringing_top_offset, _stringing_bottom_width - _stringing_top_offset, stringing_tower_height],
+		[_stringing_bottom_width - _stringing_top_offset, _stringing_top_offset, stringing_tower_height]
+	];
+	polyhedron_faces = [
+		[0,1,2,3],  // bottom
+		[4,5,1,0],  // front
+		[7,6,5,4],  // top
+		[5,6,2,1],  // right
+		[6,7,3,2],  // back
+		[7,4,0,3] // left
+	];
+	polyhedron(points=polyhedron_points, faces=polyhedron_faces);
+}
+
+module stringing_test() {
+	echo("Generating stringing test");
+	for (i = [0:stringing_tower_count_x-1]) {
+		for (j = [0:stringing_tower_count_y-1]) {
+			translate([i*(stringing_tower_min_dist + _stringing_bottom_width), j*(stringing_tower_min_dist + _stringing_bottom_width), 0]) {
+				stringing_tower_single();
+			}
+		}
+	}
+}
+
+// Stringing test calculations
+_stringing_top_width = extrusion_width*stringing_test_top_extrusions;
+_stringing_bottom_width = extrusion_width*stringing_test_bottom_extrusions;
+_stringing_top_offset = (_stringing_bottom_width - _stringing_top_width)/2;
+
+stringing_test_size = [
+	(stringing_tower_count_x-1)*(stringing_tower_min_dist + _stringing_bottom_width)+_stringing_bottom_width,
+	(stringing_tower_count_y-1)*(stringing_tower_min_dist + _stringing_bottom_width)+_stringing_bottom_width,
+	stringing_tower_height
+];/* END stringing-test.scad*/
+/* START overhang-test.scad*/
+module overhang_single(angle) {
+	polyhedron_points = [
+		[1, 0, 0], // 0
+		[1, overhang_test_length, 0], // 1
+		[0, overhang_test_length, 0], // 2
+		[0, 0, 0], // 3
+		[1+tan(angle)*(overhang_test_height*layer_height), 0, (overhang_test_height*layer_height)], // 04
+		[1+tan(angle)*(overhang_test_height*layer_height), overhang_test_length, (overhang_test_height*layer_height)], // 5
+		[0, overhang_test_length, (overhang_test_height*layer_height)], // 6
+		[0, 0, (overhang_test_height*layer_height)], // 7
+	];
+	polyhedron_faces = [
+		[0,1,2,3],  // bottom
+		[4,5,1,0],  // front
+		[7,6,5,4],  // top
+		[5,6,2,1],  // right
+		[6,7,3,2],  // back
+		[7,4,0,3] // left
+	];
+	union(){
+		polyhedron(points=polyhedron_points, faces=polyhedron_faces);
+		translate([0,0,(overhang_test_height*layer_height)])
+		cube([
+			1+tan(angle)*(overhang_test_height*layer_height), 
+			overhang_test_length, 
+			(overhang_test_extra_layers*layer_height)]);
+	}
+}
+
+module overhang_test() {
+	echo("Generating overhang test");
+	for (i = [0:1:(overhang_test_end_angle-overhang_test_start_angle)/overhang_test_angle_step]) {
+		translate([0, 0, (overhang_test_height*layer_height+(overhang_test_extra_layers*layer_height))*i]) {
+			echo(str("Overhang ", i+1, ": angle: ", overhang_test_end_angle - i*overhang_test_angle_step));
+			overhang_single(overhang_test_end_angle - i*overhang_test_angle_step);
+		}
+	}
+}
+
+overhang_test_size = [
+	1+tan(max(overhang_test_start_angle, overhang_test_end_angle))*(overhang_test_height*layer_height),
+	overhang_test_length,
+	(overhang_test_height*layer_height)*((overhang_test_end_angle-overhang_test_start_angle)/overhang_test_angle_step+1)+overhang_test_extra_layers*layer_height*((overhang_test_end_angle-overhang_test_start_angle)/overhang_test_angle_step+1)
+];/* END overhang-test.scad*/
+/* START peg-hole-test.scad*/
+module peg_single(size, height=peg_hole_test_height*layer_height) {
+	if (size < slice_gap_closing_radius) {
+		echo(str("Peg size too small, setting radius to slice_gap_closing_radius: ", slice_gap_closing_radius));
+		cylinder(h=height, r=slice_gap_closing_radius);
+	}
+	else {
+		cylinder(h=height, r=size);
+	}
+}
+
+module peg_hole_test() {
+	echo("Generating peg hole test");
+	translate([(peg_hole_test_max_mult*extrusion_width+peg_hole_test_min_dist*extrusion_width),(peg_hole_test_max_mult*extrusion_width),0]){
+		for (i = [0:peg_hole_test_step_mult:peg_hole_test_max_mult-peg_hole_test_min_mult]) {
+			echo(str("Peg ", i+1, ": size: ", (i+peg_hole_test_min_mult)*extrusion_width));
+			translate([_peg_offset*i/peg_hole_test_step_mult*2, 0, 0]) {
+				peg_single((i+peg_hole_test_min_mult)*extrusion_width);
+			}
+		}
+		translate([0, (peg_hole_test_max_mult)*extrusion_width*2+(peg_hole_test_min_dist*extrusion_width)*2, 0]){
+			difference(){
+				translate([
+					-(peg_hole_test_max_mult*extrusion_width+peg_hole_test_min_dist*extrusion_width),
+					-(peg_hole_test_max_mult*extrusion_width+peg_hole_test_min_dist*extrusion_width),
+					0
+					]){
+					cube([
+						_peg_offset*(peg_hole_test_max_mult-peg_hole_test_min_mult+peg_hole_test_step_mult-((peg_hole_test_max_mult-peg_hole_test_min_mult)%peg_hole_test_step_mult))/peg_hole_test_step_mult*2,
+						(peg_hole_test_max_mult*extrusion_width+peg_hole_test_min_dist*extrusion_width)*2,
+						peg_hole_test_height*layer_height-slice_gap_closing_radius
+						]);
+				}
+				for (i = [0:peg_hole_test_step_mult:peg_hole_test_max_mult-peg_hole_test_min_mult]) {
+					echo(str("Hole ", i+1, ": size: ", (peg_hole_test_max_mult-i)*extrusion_width));
+					translate([
+						_peg_offset*i/peg_hole_test_step_mult*2, 
+						0, 
+						-0.5
+						]) {
+						peg_single((peg_hole_test_max_mult-i)*extrusion_width, peg_hole_test_height*layer_height+1);
+					}
+				}
+			}
+		}
+	}
+}
+
+
+// Peg & hole test calculations
+_peg_offset = extrusion_width*peg_hole_test_max_mult + peg_hole_test_min_dist*extrusion_width;
+
+peg_hole_test_size = [
+	_peg_offset*(peg_hole_test_max_mult-peg_hole_test_min_mult+peg_hole_test_step_mult-((peg_hole_test_max_mult-peg_hole_test_min_mult)%peg_hole_test_step_mult))/peg_hole_test_step_mult*2,
+	(peg_hole_test_max_mult*extrusion_width+peg_hole_test_min_dist*extrusion_width)*2*2-peg_hole_test_min_dist*extrusion_width,
+	peg_hole_test_height*layer_height
+];
+/* END peg-hole-test.scad*/
+/* START bridging-test.scad*/
+module bridge_single(length) {
+	cube([bridging_test_bridge_width*extrusion_width, bridging_test_bridge_width*extrusion_width, bridging_test_tower_height*layer_height ]);
+	translate([length+extrusion_width*bridging_test_bridge_width,0,0]){
+		cube([bridging_test_bridge_width*extrusion_width, bridging_test_bridge_width*extrusion_width, bridging_test_tower_height*layer_height ]);
+	}
+	translate([0,0,bridging_test_tower_height*layer_height]){
+		cube([length+bridging_test_bridge_width*extrusion_width*2, bridging_test_bridge_width*extrusion_width, bridging_test_bridge_height*layer_height ]);
+	}
+}
+
+module bridging_test(){
+	echo("Generating bridging test");
+	for (i = [0:1:(bridging_test_end-bridging_test_start)/bridging_test_step]) {
+		echo(str("Bridge ", i+1, ": length: ", bridging_test_start+ i*bridging_test_step));
+		translate([0, (bridging_test_gap*extrusion_width+bridging_test_bridge_width*extrusion_width)*i, 0]) {
+			bridge_single(bridging_test_start+ i*bridging_test_step);
+		}
+	}
+}
+
+bridging_test_size = [
+	bridging_test_bridge_width*2*extrusion_width+bridging_test_end-((bridging_test_end-bridging_test_start)%bridging_test_step),
+	(bridging_test_gap*extrusion_width+bridging_test_bridge_width*extrusion_width)*((bridging_test_end-bridging_test_start)/bridging_test_step)+bridging_test_bridge_width*extrusion_width,
+	bridging_test_tower_height*layer_height + bridging_test_bridge_height*layer_height
+];/* END bridging-test.scad*/
+/* START tolerance-test.scad*/
+module tolerance_single_round(diameter, tolerance) {
+	translate([
+		(diameter+tolerance_test_gap*extrusion_width*2+tolerance_test_end)/2,
+		(diameter+tolerance_test_gap*extrusion_width*2+tolerance_test_end)/2, 
+		tolerance_test_height*layer_height/2
+	])
+	difference(){
+		cube([diameter+tolerance_test_end+tolerance_test_gap*2*extrusion_width, 
+		diameter+tolerance_test_end+tolerance_test_gap*2*extrusion_width, 
+		tolerance_test_height*layer_height], 
+		center = true);
+		cylinder(h=tolerance_test_height*layer_height+slice_gap_closing_radius, 
+		r=diameter/2+tolerance, 
+		center=true);
+	}
+}
+
+module tolerance_single_square(size, tolerance) {
+	translate([
+		(size+tolerance_test_gap*extrusion_width*2+tolerance_test_end)/2,
+		(size+tolerance_test_gap*extrusion_width*2+tolerance_test_end)/2, 
+		tolerance_test_height*layer_height/2
+	])
+	difference(){
+		cube([size+tolerance_test_end+tolerance_test_gap*2*extrusion_width, 
+		size+tolerance_test_end+tolerance_test_gap*2*extrusion_width, 
+		tolerance_test_height*layer_height], 
+		center = true);
+		cube([size+tolerance*2, size+tolerance*2, tolerance_test_height*layer_height+slice_gap_closing_radius], 
+		center=true);
+	}
+}
+
+module tolerance_test() {
+	echo("Generating tolerance test");
+	if(tolerance_test_mode == "cylinder" || tolerance_test_mode == "both") {
+		for (i = [0:1:(tolerance_test_end-tolerance_test_start)/tolerance_test_step]) {
+			echo(str("Hole ", i+1, ": ", tolerance_test_start+i*2*tolerance_test_step+tolerance_test_diameter));
+			translate([(tolerance_test_diameter+tolerance_test_end+tolerance_test_gap*2*extrusion_width)*i,0,0]){
+				tolerance_single_round(tolerance_test_diameter, i*tolerance_test_step+tolerance_test_start);
+				if (tolerance_test_mode == "both") {
+					translate([0,tolerance_test_diameter+tolerance_test_gap*extrusion_width*2+tolerance_test_end,0]){
+						tolerance_single_square(tolerance_test_diameter, i*tolerance_test_step+tolerance_test_start);
+					}
+				}
+			}
+		}
+
+		translate([
+			(tolerance_test_diameter+tolerance_test_end+tolerance_test_gap*2*extrusion_width)*(tolerance_test_end-tolerance_test_start+tolerance_test_step)/tolerance_test_step+tolerance_test_gap*extrusion_width,
+			0,
+			-test_bottom_layers*layer_height
+		]){
+			translate([
+				(tolerance_test_diameter+tolerance_test_end)/2+tolerance_test_gap*extrusion_width,
+				(tolerance_test_diameter+tolerance_test_gap*extrusion_width*2+tolerance_test_end)/2, 
+				tolerance_test_height*layer_height
+			]){
+				echo(str("Tolerance test peg: ", tolerance_test_diameter));
+				cylinder(h=tolerance_test_height*layer_height*2, 
+			r=tolerance_test_diameter/2, 
+			center=true);
+				if (tolerance_test_mode == "both") {
+					translate([
+						0,
+						tolerance_test_diameter+tolerance_test_gap*extrusion_width*2+tolerance_test_end,
+						0
+					])
+					minkowski() {
+						cube([
+							tolerance_test_diameter-4,
+							tolerance_test_diameter-4,
+							tolerance_test_height*layer_height*2/2
+							], center=true);
+						cylinder(h=tolerance_test_height*layer_height*2/2, r=2,center=true);
+					}
+				}
+			}
+		}
+	}
+	if(tolerance_test_mode == "cube") {
+		for (i = [0:1:(tolerance_test_end-tolerance_test_start)/tolerance_test_step]) {
+			echo(str("Hole ", i+1, ": ", tolerance_test_start+i*tolerance_test_step+tolerance_test_diameter));
+			translate([(tolerance_test_diameter+tolerance_test_end+tolerance_test_gap*2*extrusion_width)*i,0,0]){
+				tolerance_single_square(tolerance_test_diameter, i*tolerance_test_step+tolerance_test_start);
+				
+			}
+		}
+
+		translate([
+			(tolerance_test_diameter+tolerance_test_end+tolerance_test_gap*2*extrusion_width)*(tolerance_test_end-tolerance_test_start+tolerance_test_step)/tolerance_test_step+tolerance_test_gap*extrusion_width,
+			0,
+			-test_bottom_layers*layer_height
+		]){
+			translate([
+				(tolerance_test_diameter+tolerance_test_end)/2+tolerance_test_gap*extrusion_width,
+				(tolerance_test_diameter+tolerance_test_gap*extrusion_width*2+tolerance_test_end)/2, 
+				tolerance_test_height*layer_height
+			]){
+				echo(str("Tolerance test peg: ", tolerance_test_diameter));
+				minkowski() {
+					cube([
+						tolerance_test_diameter-4,
+						tolerance_test_diameter-4,
+						tolerance_test_height*layer_height*2/2
+						], center=true);
+					cylinder(h=tolerance_test_height*layer_height*2/2, r=2,center=true);
+				}
+			}
+		}
+	}
+}
+
+// Tolerance
+_tol_size_mult = tolerance_test_mode == "both" ? 2 : 1;
+
+tolerance_test_size = [
+	(tolerance_test_end+tolerance_test_diameter+tolerance_test_gap*2*extrusion_width)*((tolerance_test_end-tolerance_test_start)/tolerance_test_step+2),
+	(tolerance_test_end+tolerance_test_diameter+tolerance_test_gap*2*extrusion_width)*_tol_size_mult,
+	tolerance_test_height*layer_height
+];
+/* END tolerance-test.scad*/
+/* START sphere-test.scad*/
+module sphere_test_bowl(size) {
+	echo(str("Generating bowl, size: ", size));
+	difference(){
+		difference(){
+			sphere(size/2);
+			translate([0,0,-size/2]){
+				cube([size, size, size], center=true);
+			}
+		}
+		translate([0,0,size/1.5]){
+			sphere(size/2);
+		}
+	}
+}
+
+module sphere_test_sphere(size) {
+	echo(str("Generating sphere, size: ", size));
+	difference(){
+		sphere(size/2);
+		translate([0,0,-size/2]){
+			cube([size, size, size], center=true);
+		}
+	}
+}
+
+module sphere_test() {
+	translate([0,sphere_test_end/2,0])
+	for (i = [0:1:(sphere_test_end-sphere_test_start)/sphere_test_step]) {
+		current_diameter = sphere_test_start+i*sphere_test_step;
+		translate_x=gaussian_sum_with_step(sphere_test_start,sphere_test_start+i*sphere_test_step,sphere_test_step)+sphere_test_gap*i*extrusion_width;
+
+		translate([
+			translate_x-sphere_test_start/2,
+			0, 
+			0
+		]) {
+			if (sphere_test_mode == "bowl") {
+				sphere_test_bowl(current_diameter);
+			}
+			if (sphere_test_mode == "sphere") {
+				sphere_test_sphere(current_diameter);
+			}
+			if (sphere_test_mode == "both") {
+				sphere_test_bowl(current_diameter);
+				translate([0,sphere_test_end+sphere_test_gap*extrusion_width*2,0]){
+					sphere_test_sphere(current_diameter);
+				}
+			}
+		}
+	}
+}
+
+// Sphere
+_sphere_size_mult = sphere_test_mode == "both" ? 2 : 1;
+_sphere_gap = sphere_test_mode == "both" ? sphere_test_gap*extrusion_width*2 : 0;
+
+sphere_test_size = [
+	gaussian_sum_with_step(sphere_test_start,sphere_test_end,sphere_test_step)
+		+sphere_test_end/2
+		-sphere_test_gap*extrusion_width*2
+		+sphere_test_gap*(sphere_test_end-sphere_test_start)/sphere_test_step*extrusion_width,
+	sphere_test_end*_sphere_size_mult+_sphere_gap,
+	sphere_test_end/2
+];
+/* END sphere-test.scad*/
+/* START accuracy-test.scad*/
+module accuracy_cube(size, text_depth) {
+	render()
+	difference(){
+		cube([size, size, size]);
+		union(){
+			rotate([90,0,0])
+			translate([size/2,size/2,0])
+			linear_extrude(height=text_depth*layer_height*2,center=true){
+				text("-Y", size=(size/2), font="Liberation Mono:style=Regular", halign="center", valign="center");
+			}
+			translate([size/2,size,size/2])
+			rotate([-90,0,0])
+			rotate([0,0,180])
+			linear_extrude(height=text_depth*layer_height*2,center=true){
+				text("+Y", size=(size/2), font="Liberation Mono:style=Regular", halign="center", valign="center");
+			}
+			rotate([0,-90,0])
+			translate([size/2,size/2,0])
+			linear_extrude(height=text_depth*layer_height*2,center=true){
+				rotate([0,0,-90])
+				text("-X", size=(size/2), font="Liberation Mono:style=Regular", halign="center", valign="center");
+			}
+			translate([size,size/2,size/2])
+			rotate([0,90,0])
+			linear_extrude(height=text_depth*layer_height*2,center=true){
+				rotate([0,0,90])
+				text("+X", size=(size/2), font="Liberation Mono:style=Regular", halign="center", valign="center");
+			}
+			translate([size/2,size/2,0])
+			linear_extrude(height=text_depth*layer_height*2,center=true){
+				text("-Z", size=(size/2), font="Liberation Mono:style=Regular", halign="center", valign="center");
+			}
+			translate([size/2,size/2,size])
+			linear_extrude(height=text_depth*layer_height*2,center=true){
+				text("+Z", size=(size/2), font="Liberation Mono:style=Regular", halign="center", valign="center");
+			}
+
+		}
+	}
+}
+
+module accuracy_cylinder(size, text_depth) {
+	render()
+	difference(){
+		translate([size/2,size/2,size/2])
+		cylinder(h=size, r=size/2, center=true);
+		translate([size/2,size/2,size])
+		linear_extrude(height=text_depth*layer_height*2, center=true)
+		text(str(size), size=(size/2)*0.75, font="Liberation Mono:style=Regular", halign="center", valign="center");
+	}
+}
+
+module accuracy_test(){
+	if (dimensional_accuracy_test_mode == "cube" || dimensional_accuracy_test_mode == "both") {
+		for (i = [0:1:(dimensional_accuracy_test_end-dimensional_accuracy_test_start)/dimensional_accuracy_test_step]) {
+			current_size = dimensional_accuracy_test_start+i*dimensional_accuracy_test_step;
+			translate([i==0?0:gaussian_sum_with_step(dimensional_accuracy_test_start,i*dimensional_accuracy_test_step,dimensional_accuracy_test_step)+test_padding*extrusion_width*i,0,0]){
+				accuracy_cube(current_size, dimensional_accuracy_test_text_depth);
+				echo(str("Cube ", i+1, ": size: ", current_size));
+				if (dimensional_accuracy_test_mode == "both") {
+					translate([0,current_size+test_padding*extrusion_width,0])
+					accuracy_cylinder(current_size, dimensional_accuracy_test_text_depth);
+					echo(str("Cylinder ", i+1, ": size: ", current_size));
+				}
+			}
+		}
+	}
+	if (dimensional_accuracy_test_mode == "cylinder") {
+		for (i = [0:1:(dimensional_accuracy_test_end-dimensional_accuracy_test_start)/dimensional_accuracy_test_step]) {
+			current_size = dimensional_accuracy_test_start+i*dimensional_accuracy_test_step;
+			translate([i==0?0:gaussian_sum_with_step(dimensional_accuracy_test_start,i*dimensional_accuracy_test_step,dimensional_accuracy_test_step)+test_padding*extrusion_width*i,0,0]){
+				accuracy_cylinder(current_size, dimensional_accuracy_test_text_depth);
+				echo(str("Cylinder ", i+1, ": size: ", current_size));
+			}
+		}
+	}
+}
+
+
+// Accuracy
+_dim_mult = dimensional_accuracy_test_mode == "both" ? 1 : 0;
+accuracy_test_size = [
+	gaussian_sum_with_step(dimensional_accuracy_test_start,dimensional_accuracy_test_end,dimensional_accuracy_test_step)+test_padding*extrusion_width*(dimensional_accuracy_test_end-dimensional_accuracy_test_start)/dimensional_accuracy_test_step,
+	dimensional_accuracy_test_end+(dimensional_accuracy_test_end+test_padding*extrusion_width)*_dim_mult,
+	dimensional_accuracy_test_end
+];/* END accuracy-test.scad*/
+/* START text-test.scad*/
+module text_test_single(size, debug = false) {
+	text_width = size*len(str(size, ": ",ts_string))*ts_adv_width_scaling;
+	if (debug){
+		%cube([text_width, size*ts_adv_height_scaling, ts_depth*layer_height], center=true);
+		color(color_scheme[7%len(color_scheme)]) linear_extrude(height=layer_height)
+		text(str(size, ": ",ts_string), size=size, font=ts_adv_font, halign="center", valign="center");
+	}
+	else {
+		text(str(size, ": ",ts_string), size=size, font=ts_adv_font, halign="center", valign="center");
+	}
+}
+
+module text_test() {
+	echo("Generating text test");
+	text_max_width = ts_end*len(str(ts_end, ": ",ts_string))*ts_adv_width_scaling;
+	difference() {
+		cube([text_max_width, text_height_sum, ts_depth*layer_height+slice_gap_closing_radius]);
+		union(){
+			for (i = [0:1:(ts_end-ts_start)/ts_step]) {
+				current_size = ts_start+i*ts_step;
+				echo(str("Text size ", i+1, ": size: ", current_size));
+				text_width = current_size*len(str(current_size, ": ",ts_string))*ts_adv_width_scaling;
+				/* 
+				* I legit have no clue how this works or if gaussian sum is applicable here 
+				* but it does work so don't touch it
+				* Also: this breaks if you use the gaussian sum without factor
+				* even though the factor is 1 so... something weird is going on
+				*/
+				translate_y = gauss_with_step_and_factor(ts_start,ts_start+i*ts_step,ts_step,1)*ts_adv_height_scaling*ts_step-ts_adv_height_scaling*i*ts_step;
+				echo(str("Translate y: ", translate_y));
+				translate([0,
+					translate_y+ts_min_dist*i*extrusion_width,
+				0]){
+					// Move to +x+y quadrant
+					translate([
+						text_width/2,
+						(current_size*ts_adv_height_scaling)/2,
+						// workaround for preview glitching
+						ts_depth*layer_height-slice_gap_closing_radius/2
+					]){
+						linear_extrude(height=ts_depth*layer_height*2, center=true){
+							text_test_single(current_size);
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+
+// Text
+text_height_sum = gauss_with_step_and_factor(ts_start,ts_end,ts_step,1)*ts_adv_height_scaling*ts_step-ts_adv_height_scaling*((ts_end-ts_start)/ts_step)*ts_step +ts_end*ts_adv_height_scaling+ts_min_dist*((ts_end-ts_start)/ts_step)*extrusion_width;
+
+text_test_size = [
+	ts_end*len(str(ts_end, ": ",ts_string))*ts_adv_width_scaling,
+	text_height_sum,
+	ts_depth*layer_height
+];
+
+/* END text-test.scad*/
+/* START bed-level-test.scad*/
+module bed_level_test(){
+	do_spots = bed_level_test_mode == "spot" || bed_level_test_mode == "both";
+	do_lines = bed_level_test_mode == "line" || bed_level_test_mode == "both";
+	linewidth = bed_level_line_width*extrusion_width;
+	divs = bed_level_divisions-1;
+	spot_spacing = [
+		(bed_size_x-bed_level_padding*2-bed_level_spot_size[0])/divs,
+		(bed_size_y-bed_level_padding*2-bed_level_spot_size[1])/divs
+	];
+	line_length = do_spots ? [
+		bed_size_x-bed_level_padding*2-bed_level_spot_size[0],
+		bed_size_y-bed_level_padding*2-bed_level_spot_size[1]
+	] : [
+		bed_size_x-bed_level_padding*2,
+		bed_size_y-bed_level_padding*2
+	];
+	union() {
+		if (do_spots) {
+			for (x=[0:divs]){
+				for (y=[0:divs]){
+					translate([
+						spot_spacing[0]*(x-(floor(divs/2))),
+						spot_spacing[1]*(y-(floor(divs/2))),
+						0
+					]){
+						cube([bed_level_spot_size[0],bed_level_spot_size[1],layer_height],center=true);
+					}
+				}
+			}
+		}
+		if (do_lines) {
+			for (i=[0:divs]){
+				translate([
+					0,
+					do_spots ? spot_spacing[1]*(i-(floor(divs/2))) : (spot_spacing[1]+(bed_level_spot_size[1]-bed_level_line_width*extrusion_width)/2)*(i-(floor(divs/2))) ,
+					0
+				]){
+					cube([line_length[0],linewidth,layer_height], center=true);
+				} 
+			}
+			for (i=[0:divs]){
+				translate([
+					do_spots ? spot_spacing[0]*(i-(floor(divs/2))) : (spot_spacing[0]+(bed_level_spot_size[0]-bed_level_line_width*extrusion_width)/2)*(i-(floor(divs/2))),
+					0,
+					0
+				]){
+					cube([linewidth,line_length[1],layer_height], center=true);
+				} 
+			}
+		}
+	}
+}/* END bed-level-test.scad*/
 
 
 // ========== Helper Functions ==========
@@ -633,3 +1190,5 @@ if ((sphere_test_start/sphere_test_step)%1 != 0 || (sphere_test_end/sphere_test_
 if ((sphere_test_end/sphere_test_start)%1 != 0) {
 	echo("WARNING: Sphere test end is not divisible by start, the test might use too much space for the bottom layers.");
 }
+/* END 3d-printer-testing-suite.scad*/
+
