@@ -16,7 +16,7 @@ detail_level=64; // 5
 // Preview mode (Reduces arc segments to 16 for faster rendering. TURN OFF BEFORE EXPORTING)
 preview_mode = false;
 // Test type
-test_type = "common"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text, chimney, bed_level]
+test_type = "debug"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text, chimney, bed_level]
 // Color scheme, see en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#color for available colors
 color_scheme = ["red", "green", "blue", "cyan", "magenta", "yellow", "darkorange", "lime", "steelblue"];
 
@@ -228,10 +228,56 @@ include <modules/bed-level-test.scad>
 
 
 // ========== Helper Functions ==========
-function largest_in_blocker_array_x(arr) = max([for (i = [0:len(arr)-1]) arr[i][1][0]]);
-function smallest_in_blocker_array_x(arr) = min([for (i = [0:len(arr)-1]) arr[i][0][0]]);
-function largest_in_blocker_array_y(arr) = max([for (i = [0:len(arr)-1]) arr[i][1][1]]);
-function smallest_in_blocker_array_y(arr) = min([for (i = [0:len(arr)-1]) arr[i][0][1]]);
+// Blocker array: [[[-x,-y],[+x,+y]], ...]
+
+function largest_in_blocker_array_x(arr, object_size) = max(
+	[
+		for (i = [0:len(arr)-1]) 
+			abs(arr[i][0][1])!=abs(arr[i][1][1]) 
+			&& object_size[1]/2 < min(abs(arr[i][0][1]),abs(arr[i][1][1]))
+			?
+			0
+			:
+			arr[i][1][0]
+		
+	]
+);
+
+function smallest_in_blocker_array_x(arr, object_size) = min(
+	[
+		for (i = [0:len(arr)-1]) 
+			abs(arr[i][0][1])!=abs(arr[i][1][1]) 
+			&& object_size[1]/2 < min(abs(arr[i][0][1]),abs(arr[i][1][1]))
+			?
+			0
+			:
+			arr[i][0][0]
+	]
+);
+
+function largest_in_blocker_array_y(arr,object_size) = max(
+	[
+		for (i = [0:len(arr)-1]) 
+			abs(arr[i][0][0])!=abs(arr[i][1][0]) 
+			&& object_size[0]/2 < min(abs(arr[i][0][0]),abs(arr[i][1][0]))
+			?
+			0
+			:
+			arr[i][1][1]
+	]
+);
+
+function smallest_in_blocker_array_y(arr,object_size) = min(
+	[
+		for (i = [0:len(arr)-1]) 
+			abs(arr[i][0][0])!=abs(arr[i][1][0]) 
+			&& object_size[0]/2 < min(abs(arr[i][0][0]),abs(arr[i][1][0]))
+			?
+			0
+			:
+			arr[i][0][1]
+	]
+);
 
 /* 
 	* Adjusted gaussian sum:
@@ -355,15 +401,15 @@ module pack_objects(object_list, object_sizes, blockers, masks){
 	masks_new = len(masks) > 1 ? [for (i=[1:len(masks)-1]) masks[i]] : [];
 
 	if (mask == 0) {
-		// echo("Object is not to be placed");
+		echo("Object is not to be placed");
 		if (is_list(object_list_new) && len(object_list_new) > 0) {
 			pack_objects(object_list_new, object_sizes_new, blockers, masks_new);
 		}
 	}
 	else {
-		// echo(str("Placing Object: ", object, "; Size: ", object_size, "; Mask: ", mask));
+		echo(str("Placing Object: ", object, "; Size: ", object_size, "; Mask: ", mask));
 		if (len(blockers) == 0 || is_undef(blockers)) {
-			// echo("No blockers, placing object in center");
+			echo("No blockers, placing object in center");
 			object_blockers = [
 				[-object_size[0]/2-test_padding*extrusion_width/2,-object_size[1]/2-test_padding*extrusion_width/2],
 				[object_size[0]/2+test_padding*extrusion_width/2,object_size[1]/2+test_padding*extrusion_width/2]
@@ -385,10 +431,10 @@ module pack_objects(object_list, object_sizes, blockers, masks){
 			// Pack object as close to middle as possible without intersecting blockers
 			direction = (pack_rotation+len(object_list)) % 4;
 
-			largest_x = largest_in_blocker_array_x(blockers);
-			smallest_x = smallest_in_blocker_array_x(blockers);
-			largest_y = largest_in_blocker_array_y(blockers);
-			smallest_y = smallest_in_blocker_array_y(blockers);
+			largest_x = largest_in_blocker_array_x(blockers, object_size);
+			smallest_x = smallest_in_blocker_array_x(blockers, object_size);
+			largest_y = largest_in_blocker_array_y(blockers,object_size);
+			smallest_y = smallest_in_blocker_array_y(blockers,object_size);
 
 			if (direction == 0) {
 				// +X
@@ -654,6 +700,7 @@ else {
 }
 
 echo("=======Finished=======");
+echo(object_list,object_sizes,mask);
 
 // === Warnings ===
 // Tolerance
