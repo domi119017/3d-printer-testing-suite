@@ -1,5 +1,5 @@
 # Fully customizable (FFF/FDM) 3D printer testing suite
-![default settings](img/cover.png)
+![default settings](build/img/cover.png)
 ## Introduction
 This is a fully customizable 3D printer testing suite including tests for stringing, tolerance, small features, bridging, overhangs, dimensional accuracy and radii.
 Some of these tests focus more on machine capability while others are influenced more by filament choice.
@@ -23,12 +23,12 @@ I did this to learn OpenSCAD and as such the quality of the code is rather bad. 
 ### Packing
 Packing is used if you want to generate some of the models but not all of them. If enabled it will overwrite the test type setting from general. Just check which tests you need.
 
-![packing](img/packed.png)
+![packing](build/img/packed.png)
 - pack objects: enable/disable
 - packing rotation: Changes the order of directions in which objects are packed. Can be useful if something is packed inefficiently.
 - sorting method: Changes order of objects while packing. Descending = largest object in the middle, ascending = smallest object in the middle.
 ### Stringing
-![stringing](img/stringing.png)
+![stringing](build/img/stringing.png)
 
 - tower count x: Number of towers in X direction
 - tower count y: Number of towers in Y direction
@@ -37,7 +37,7 @@ Packing is used if you want to generate some of the models but not all of them. 
 - bottom extrusions: Number of extrusions at the bottom of the tower
 - tower height: Height of the towers
 ### Overhang
-![overhang](img/overhang.png)
+![overhang](build/img/overhang.png)
 
 - start angle: Start angle of the overhang test
 - end angle: End angle of the overhang test
@@ -46,7 +46,7 @@ Packing is used if you want to generate some of the models but not all of them. 
 - extra layers on top: Number of extra layers on top of the overhang test
 - length: Length of the overhang test
 ### Peg/Hole
-![peg/hole](img/peg_hole.png)
+![peg/hole](build/img/peg_hole.png)
 
 This test generates very small pegs and holes to test how well you are able to reproduce those features. You should be able to print a peg with diameter of 2 extrusions.
 - min size: Minimum peg/hole size in extrusions
@@ -55,7 +55,7 @@ This test generates very small pegs and holes to test how well you are able to r
 - height: Height of the test
 - min dist: Minimum distance between pegs/holes
 ### Bridging
-![bridging](img/bridging.png)
+![bridging](build/img/bridging.png)
 
 - start: Start length of the bridging test
 - end: End length of the bridging test
@@ -65,7 +65,7 @@ This test generates very small pegs and holes to test how well you are able to r
 - bridge width: Width of the bridges (I strongly recommend keeping this at 2, otherwise the slicer will generate top infill on the bridges)
 - gap: Gap between the bridges (edge to edge)
 ### Tolerance
-![tolerance](img/tolerance.png)
+![tolerance](build/img/tolerance.png)
 
 **If you encounter issues or warnings with this test, please read the disclaimer above.**
 - mode: Select between cube, cylinder or both
@@ -76,7 +76,7 @@ This test generates very small pegs and holes to test how well you are able to r
 - diameter: Diameter of the test hole without tolerance
 - height: Height of the test (Note: this only applies to the holes, the test cylinder&cube is always double the height)
 ### Sphere
-![sphere](img/sphere.png)
+![sphere](build/img/sphere.png)
 
 **If you encounter issues or warnings with this test, please read the disclaimer above.**
 The necessity of this test is debatable, but it can be useful to tune adaptive layer height quality settings and as 3D printers in general struggle with spheres.
@@ -86,7 +86,7 @@ The necessity of this test is debatable, but it can be useful to tune adaptive l
 - step: Size step
 - gap: Gap between the test objects
 ### Dimensional accuracy
-![dimensional accuracy](img/accuracy.png)
+![dimensional accuracy](build/img/accuracy.png)
 
 **Please do not use this test to tune your steps/mm. This is only intended to verify dimensional accuracy. To calibrate your steps/mm I recommend the [cauliflower calibration](https://www.printables.com/model/682023-califlower-calibration-stl-calculator) by @AdamVector3D**
 - mode: Select between cube, cylinder or both
@@ -96,7 +96,7 @@ The necessity of this test is debatable, but it can be useful to tune adaptive l
 - gap: Gap between the test objects
 - text depth: Depth of the text on the test objects
 ### Text size test
-![text size](img/text.png)
+![text size](build/img/text.png)
 Can be used to test at which size text is too small to be legible.
 <!-- /* [Text size test settings] */
 // Test string
@@ -133,12 +133,12 @@ ts_adv_height_scaling = 1.5; //0.005 -->
 - ts adv height scaling: Height scaling factor (You should not need to change this)
 #### Text width scaling factor
 If you change the font, you will need to adjust the width scaling factor using the scaling factor view until the box has equal spacing around the text.
-- This is too small: ![too small](img/text_width_scaling_small.png)
-- This is too large: ![too large](img/text_width_scaling_big.png)
-- This is correct: ![just right](img/text_width_scaling.png)
+- This is too small: ![too small](build/img/text_width_scaling_small.png)
+- This is too large: ![too large](build/img/text_width_scaling_big.png)
+- This is correct: ![just right](build/img/text_width_scaling.png)
 
 ### Bed leveling
-![bed leveling](img/bed_level.png)
+![bed leveling](build/img/bed_level.png)
 Used to test if your bed is level.
 - bed size x: Bed size in X direction
 - bed size y: Bed size in Y direction
