@@ -59,5 +59,5 @@ _chimney_size_x = (chimney_hole_start_diameter+(chimney_base_wall_thickness+chim
 chimney_test_size = [
 	_chimney_size_x+(chimney_hole_end_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2)/2,
 	chimney_hole_end_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2,
-	1
+	(chimney_base_height+chimney_top_height)*layer_height
 ];

@@ -44,6 +44,8 @@ pack_sphere = true;
 pack_accuracy = true;
 // Enable text size 
 pack_text = true;
+// Enable chimney
+pack_chimney = true;
 
 /* [Stringing test settings] */
 // Number of towers in X
@@ -788,7 +790,7 @@ _chimney_size_x = (chimney_hole_start_diameter+(chimney_base_wall_thickness+chim
 chimney_test_size = [
 	_chimney_size_x+(chimney_hole_end_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2)/2,
 	chimney_hole_end_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2,
-	1
+	(chimney_base_height+chimney_top_height)*layer_height
 ];/* END chimney-test.scad*/
 /* START bed-level-test.scad*/
 module bed_level_test(){
@@ -910,8 +912,8 @@ function sort_objects_descending(object_list, object_sizes, mask) = _split_back_
 
 // Packing
 object_list = ["stringing", "overhang", "peg_hole", "bridging", "tolerance", "sphere", "accuracy", "text", "chimney"];
-object_sizes = [stringing_test_size, overhang_test_size, peg_hole_test_size, bridging_test_size, tolerance_test_size, sphere_test_size, accuracy_test_size, text_test_size];
-mask = [pack_stringing == true ? 1:0, pack_overhang == true ? 1:0, pack_peg_hole == true ? 1:0, pack_bridging == true ? 1:0, pack_tolerance == true ? 1:0, pack_sphere == true ? 1:0, pack_accuracy == true ? 1:0, pack_text == true ? 1:0];
+object_sizes = [stringing_test_size, overhang_test_size, peg_hole_test_size, bridging_test_size, tolerance_test_size, sphere_test_size, accuracy_test_size, text_test_size, chimney_test_size];
+mask = [pack_stringing == true ? 1:0, pack_overhang == true ? 1:0, pack_peg_hole == true ? 1:0, pack_bridging == true ? 1:0, pack_tolerance == true ? 1:0, pack_sphere == true ? 1:0, pack_accuracy == true ? 1:0, pack_text == true ? 1:0, pack_chimney == true ? 1:0];
 
 module place_debug(test_type){
 	if (test_type == "stringing"){
