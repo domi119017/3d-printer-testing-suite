@@ -12,7 +12,9 @@ test_bottom_layers = 3; // 1
 // Test padding (extrusions)
 test_padding = 6; // 1
 // Arc segments (higher = smoother curves)
-detail_level=35; // 5
+detail_level=64; // 5
+// Preview mode (Reduces arc segments to 16 for faster rendering. TURN OFF BEFORE EXPORTING)
+preview_mode = false;
 // Test type
 test_type = "common"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text, bed_level]
 // Color scheme, see en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#color for available colors
@@ -921,15 +923,12 @@ module pack_objects(object_list, object_sizes, blockers, masks){
 				blockers_new = concat(blockers, [object_blockers]);
 				debug_blocker(object_blockers, object_size);
 				translate([largest_x+test_padding*extrusion_width+object_size[0]/2,0,0]){
-
-					
 					// Center object on xy plane
 					object_center = [-object_size[0]/2, -object_size[1]/2, 0];
 					translate(object_center)
 					// Place object
 					place_with_bottom(object);
 				}
-
 				if (is_list(object_list_new) && len(object_list_new) > 0) {
 					pack_objects(object_list_new, object_sizes_new, blockers_new, masks_new);
 				}
@@ -1132,24 +1131,20 @@ module place_with_bottom(test_type) {
 	}
 }
 
-$fn = detail_level;
-// Viewport settings for debugging
-// $vpt = test_type == "debug" ? [75,172,10] : $vpt;
-// $vpr = test_type == "debug" ? [55,0,60] : $vpr;
-// $vpd = test_type == "debug" ? 550 : $vpd;
+$fn = preview_mode ? 16 : detail_level;
+$fs = preview_mode ? 0.5 : $fs;
 
 if (ts_adv_scaling_factor_view) {
 	text_test_single(ts_end, debug = true);
 }
 else if (test_type=="bed_level"){
-	bed_level_test();
+	color(color_scheme[0]) bed_level_test();
 }
 else if (pack_objects) {
 	object_lists_combined = [object_list, object_sizes, mask];
 	object_lists_sorted = pack_sorting=="ascending"?sort_objects_ascending(object_list, object_sizes, mask):pack_sorting=="descending"?sort_objects_descending(object_list, object_sizes, mask):object_lists_combined;
 	blockers = [];
 
-	// pack_objects(object_list, object_sizes, blockers, mask);
 	pack_objects(object_lists_sorted[0], object_lists_sorted[1], blockers, object_lists_sorted[2]);
 }
 else {
