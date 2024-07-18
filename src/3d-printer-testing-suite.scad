@@ -16,7 +16,7 @@ detail_level=64; // 5
 // Preview mode (Reduces arc segments to 16 for faster rendering. TURN OFF BEFORE EXPORTING)
 preview_mode = false;
 // Test type
-test_type = "debug"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text, chimney, bed_level]
+test_type = "common"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text, chimney, bed_level]
 // Color scheme, see en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#color for available colors
 color_scheme = ["red", "green", "blue", "cyan", "magenta", "yellow", "darkorange", "lime", "steelblue"];
 
@@ -700,7 +700,6 @@ else {
 }
 
 echo("=======Finished=======");
-echo(object_list,object_sizes,mask);
 
 // === Warnings ===
 // Tolerance

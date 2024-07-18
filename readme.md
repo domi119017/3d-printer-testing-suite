@@ -137,6 +137,16 @@ If you change the font, you will need to adjust the width scaling factor using t
 - This is too large: ![too large](build/img/text_width_scaling_big.png)
 - This is correct: ![just right](build/img/text_width_scaling.png)
 
+### Chimney test
+![chimney](build/img/chimney.png)
+- chimney base height: Height of the base in layers
+- chimney top height: Height of the top part in layers
+- chimney base wall thickness: Wall thickness of the base in extrusions
+- chimney top extra thickness: Extra wall thickness of the top part in extrusions (This is the amount of overhanging walls)
+- chimney hole start diameter: Start diameter of the hole (mm)
+- chimney hole end diameter: End diameter of the hole (mm)
+- chimney hole diameter step: Diameter step of the hole (mm)
+
 ### Bed leveling
 ![bed leveling](build/img/bed_level.png)
 Used to test if your bed is level.
