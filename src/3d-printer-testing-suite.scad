@@ -16,7 +16,7 @@ detail_level=64; // 5
 // Preview mode (Reduces arc segments to 16 for faster rendering. TURN OFF BEFORE EXPORTING)
 preview_mode = false;
 // Test type
-test_type = "debug"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text, chimney, bed_level]
+test_type = "common"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text, chimney, bed_level]
 // Color scheme, see en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#color for available colors
 color_scheme = ["red", "green", "blue", "cyan", "magenta", "yellow", "darkorange", "lime", "steelblue"];
 
@@ -186,11 +186,11 @@ chimney_base_wall_thickness = 4; // 1
 // Chimney top extra thickness (extrusions)
 chimney_top_extra_thickness = 2; // 1
 // Chimney hole start diameter (mm)
-chimney_hole_start_diameter = 3; // 1
+chimney_hole_start_diameter = 1; // 1
 // Chimney hole end diameter (mm)
-chimney_hole_end_diameter = 12; // 1
+chimney_hole_end_diameter = 5; // 1
 // Chimney hole diameter step (mm)
-chimney_hole_diameter_step = 3; // 1
+chimney_hole_diameter_step = 1; // 1
 
 
 /* [Bed level test settings] */
@@ -573,7 +573,20 @@ module place_with_bottom(test_type) {
 	}
 	if (test_type == "chimney") {
 		c = color_scheme[8%len(color_scheme)];
-		color(c) chimney_test();
+		color(c)
+		translate([0,0,test_bottom_layers*layer_height])
+		chimney_test();
+		color(c)
+		translate([
+			-test_padding/2*extrusion_width,
+			-test_padding/2*extrusion_width,
+			0
+		])
+		cube([
+			chimney_test_size[0]+test_padding*extrusion_width,
+			chimney_test_size[1]+test_padding*extrusion_width,
+			test_bottom_layers*layer_height
+		]);
 	}
 	if (test_type == "common") {
 		place_with_bottom("stringing");

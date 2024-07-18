@@ -25,24 +25,22 @@ module chimney_single(diameter) {
 		}
 		translate([0,0,-slice_gap_closing_radius/2])
 		cylinder(h=(chimney_top_height+chimney_base_height)*layer_height+slice_gap_closing_radius, d=diameter);
-		
 	}
 }
 
 module chimney_test(){
-	translate([0,(chimney_hole_end_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2)/2,0])
+	translate([
+		(chimney_hole_start_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2)/2,
+		(chimney_hole_end_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2)/2,
+		0
+	])
 	for (i= [0:1:(chimney_hole_end_diameter-chimney_hole_start_diameter)/chimney_hole_diameter_step]){
 		translate([
-			// gaussian_sum_with_step(
-			// 	chimney_hole_start_diameter, 
-			// 	chimney_hole_start_diameter+i*chimney_hole_diameter_step, 
-			// 	chimney_hole_diameter_step
-			// )
-			// +i*(chimney_top_extra_thickness+chimney_base_wall_thickness)*extrusion_width*2-chimney_hole_start_diameter/2
-			// +i*test_padding*extrusion_width
-			// +(i)*(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2
-			// +(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width/2
-			0,0,
+			gaussian_sum_with_step(chimney_hole_start_diameter+chimney_hole_diameter_step, chimney_hole_start_diameter+chimney_hole_diameter_step*i, chimney_hole_diameter_step)
+				-(chimney_hole_start_diameter/2)*i
+				+i*(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2
+				+test_padding*extrusion_width*i
+			,0,
 			0
 		]){
 			chimney_single(chimney_hole_start_diameter+chimney_hole_diameter_step*i);
@@ -50,8 +48,16 @@ module chimney_test(){
 	}
 }
 
+_i = (chimney_hole_end_diameter-chimney_hole_start_diameter)/chimney_hole_diameter_step;
+
+_chimney_size_x = (chimney_hole_start_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2)/2
+	+ gaussian_sum_with_step(chimney_hole_start_diameter+chimney_hole_diameter_step, chimney_hole_start_diameter+chimney_hole_diameter_step*_i, chimney_hole_diameter_step)
+				-(chimney_hole_start_diameter/2)*_i
+				+_i*(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2
+				+test_padding*extrusion_width*_i;
+
 chimney_test_size = [
-	gaussian_sum_with_step(chimney_hole_start_diameter, chimney_hole_start_diameter+(chimney_hole_end_diameter-chimney_hole_start_diameter)/chimney_hole_diameter_step*chimney_hole_diameter_step, chimney_hole_diameter_step)+(chimney_hole_end_diameter-chimney_hole_start_diameter)/chimney_hole_diameter_step*test_padding*extrusion_width+(chimney_hole_end_diameter)/2+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width/2,
-	chimney_hole_end_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width,
+	_chimney_size_x+(chimney_hole_end_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2)/2,
+	chimney_hole_end_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2,
 	1
 ];

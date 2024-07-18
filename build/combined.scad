@@ -17,7 +17,7 @@ detail_level=64; // 5
 // Preview mode (Reduces arc segments to 16 for faster rendering. TURN OFF BEFORE EXPORTING)
 preview_mode = false;
 // Test type
-test_type = "common"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text, bed_level]
+test_type = "common"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text, chimney, bed_level]
 // Color scheme, see en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#color for available colors
 color_scheme = ["red", "green", "blue", "cyan", "magenta", "yellow", "darkorange", "lime", "steelblue"];
 
@@ -176,6 +176,22 @@ ts_adv_font = "Liberation Mono:style=Regular";
 ts_adv_width_scaling = 0.835; //0.005
 // Height scaling factor (You should not need to change this, afaik actual text height is always 1.5 times the size)
 ts_adv_height_scaling = 1.5; //0.005
+
+/* [Chimney test settings] */
+// Chimney base height (layers)
+chimney_base_height = 10; // 1
+// Chimney top height (layers)
+chimney_top_height = 5; // 1
+// Chimney base wall thickness (extrusions)
+chimney_base_wall_thickness = 4; // 1
+// Chimney top extra thickness (extrusions)
+chimney_top_extra_thickness = 2; // 1
+// Chimney hole start diameter (mm)
+chimney_hole_start_diameter = 1; // 1
+// Chimney hole end diameter (mm)
+chimney_hole_end_diameter = 5; // 1
+// Chimney hole diameter step (mm)
+chimney_hole_diameter_step = 1; // 1
 
 
 /* [Bed level test settings] */
@@ -710,6 +726,70 @@ text_test_size = [
 ];
 
 /* END text-test.scad*/
+/* START chimney-test.scad*/
+// /* [Chimney test settings] */
+// // Chimney base height (layers)
+// chimney_base_height = 10; // 1
+// // Chimney top height (layers)
+// chimney_top_height = 5; // 1
+// // Chimney base wall thickness (extrusions)
+// chimney_base_wall_thickness = 4; // 1
+// // Chimney top extra thickness (extrusions)
+// chimney_top_extra_thickness = 2; // 1
+// // Chimney hole start diameter (mm)
+// chimney_hole_start_diameter = 3; // 1
+// // Chimney hole end diameter (mm)
+// chimney_hole_end_diameter = 12; // 1
+// // Chimney hole diameter step (mm)
+// chimney_hole_diameter_step = 3; // 1
+
+
+module chimney_single(diameter) {
+	difference(){
+		union(){
+			cylinder(h=chimney_base_height*layer_height, d=diameter+chimney_base_wall_thickness*extrusion_width*2);
+			translate([0,0,chimney_base_height*layer_height]){
+				cylinder(h=chimney_top_height*layer_height, d=diameter+(chimney_top_extra_thickness+chimney_base_wall_thickness)*extrusion_width*2);
+			}
+		}
+		translate([0,0,-slice_gap_closing_radius/2])
+		cylinder(h=(chimney_top_height+chimney_base_height)*layer_height+slice_gap_closing_radius, d=diameter);
+	}
+}
+
+module chimney_test(){
+	translate([
+		(chimney_hole_start_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2)/2,
+		(chimney_hole_end_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2)/2,
+		0
+	])
+	for (i= [0:1:(chimney_hole_end_diameter-chimney_hole_start_diameter)/chimney_hole_diameter_step]){
+		translate([
+			gaussian_sum_with_step(chimney_hole_start_diameter+chimney_hole_diameter_step, chimney_hole_start_diameter+chimney_hole_diameter_step*i, chimney_hole_diameter_step)
+				-(chimney_hole_start_diameter/2)*i
+				+i*(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2
+				+test_padding*extrusion_width*i
+			,0,
+			0
+		]){
+			chimney_single(chimney_hole_start_diameter+chimney_hole_diameter_step*i);
+		}
+	}
+}
+
+_i = (chimney_hole_end_diameter-chimney_hole_start_diameter)/chimney_hole_diameter_step;
+
+_chimney_size_x = (chimney_hole_start_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2)/2
+	+ gaussian_sum_with_step(chimney_hole_start_diameter+chimney_hole_diameter_step, chimney_hole_start_diameter+chimney_hole_diameter_step*_i, chimney_hole_diameter_step)
+				-(chimney_hole_start_diameter/2)*_i
+				+_i*(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2
+				+test_padding*extrusion_width*_i;
+
+chimney_test_size = [
+	_chimney_size_x+(chimney_hole_end_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2)/2,
+	chimney_hole_end_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2,
+	1
+];/* END chimney-test.scad*/
 /* START bed-level-test.scad*/
 module bed_level_test(){
 	do_spots = bed_level_test_mode == "spot" || bed_level_test_mode == "both";
@@ -829,7 +909,7 @@ function sort_objects_descending(object_list, object_sizes, mask) = _split_back_
 
 
 // Packing
-object_list = ["stringing", "overhang", "peg_hole", "bridging", "tolerance", "sphere", "accuracy", "text"];
+object_list = ["stringing", "overhang", "peg_hole", "bridging", "tolerance", "sphere", "accuracy", "text", "chimney"];
 object_sizes = [stringing_test_size, overhang_test_size, peg_hole_test_size, bridging_test_size, tolerance_test_size, sphere_test_size, accuracy_test_size, text_test_size];
 mask = [pack_stringing == true ? 1:0, pack_overhang == true ? 1:0, pack_peg_hole == true ? 1:0, pack_bridging == true ? 1:0, pack_tolerance == true ? 1:0, pack_sphere == true ? 1:0, pack_accuracy == true ? 1:0, pack_text == true ? 1:0];
 
@@ -865,6 +945,10 @@ module place_debug(test_type){
 	if (test_type == "text") {
 		color(color_scheme[7%len(color_scheme)]) text_test();
 		%cube([text_test_size[0], text_test_size[1], text_test_size[2]]);
+	}
+	if (test_type == "chimney") {
+		color(color_scheme[8%len(color_scheme)]) chimney_test();
+		%cube([chimney_test_size[0], chimney_test_size[1], chimney_test_size[2]]);
 	}
 }
 
@@ -1106,6 +1190,23 @@ module place_with_bottom(test_type) {
 			test_bottom_layers*layer_height
 		]);
 
+	}
+	if (test_type == "chimney") {
+		c = color_scheme[8%len(color_scheme)];
+		color(c)
+		translate([0,0,test_bottom_layers*layer_height])
+		chimney_test();
+		color(c)
+		translate([
+			-test_padding/2*extrusion_width,
+			-test_padding/2*extrusion_width,
+			0
+		])
+		cube([
+			chimney_test_size[0]+test_padding*extrusion_width,
+			chimney_test_size[1]+test_padding*extrusion_width,
+			test_bottom_layers*layer_height
+		]);
 	}
 	if (test_type == "common") {
 		place_with_bottom("stringing");
