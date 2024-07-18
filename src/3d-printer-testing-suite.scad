@@ -16,7 +16,7 @@ detail_level=64; // 5
 // Preview mode (Reduces arc segments to 16 for faster rendering. TURN OFF BEFORE EXPORTING)
 preview_mode = false;
 // Test type
-test_type = "common"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text, bed_level]
+test_type = "debug"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text, chimney, bed_level]
 // Color scheme, see en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#color for available colors
 color_scheme = ["red", "green", "blue", "cyan", "magenta", "yellow", "darkorange", "lime", "steelblue"];
 
@@ -176,6 +176,22 @@ ts_adv_width_scaling = 0.835; //0.005
 // Height scaling factor (You should not need to change this, afaik actual text height is always 1.5 times the size)
 ts_adv_height_scaling = 1.5; //0.005
 
+/* [Chimney test settings] */
+// Chimney base height (layers)
+chimney_base_height = 10; // 1
+// Chimney top height (layers)
+chimney_top_height = 5; // 1
+// Chimney base wall thickness (extrusions)
+chimney_base_wall_thickness = 4; // 1
+// Chimney top extra thickness (extrusions)
+chimney_top_extra_thickness = 2; // 1
+// Chimney hole start diameter (mm)
+chimney_hole_start_diameter = 3; // 1
+// Chimney hole end diameter (mm)
+chimney_hole_end_diameter = 12; // 1
+// Chimney hole diameter step (mm)
+chimney_hole_diameter_step = 3; // 1
+
 
 /* [Bed level test settings] */
 // Bed size x (mm)
@@ -205,6 +221,7 @@ include <modules/tolerance-test.scad>
 include <modules/sphere-test.scad>
 include <modules/accuracy-test.scad>
 include <modules/text-test.scad>
+include <modules/chimney-test.scad>
 include <modules/bed-level-test.scad>
 
 
@@ -272,7 +289,7 @@ function sort_objects_descending(object_list, object_sizes, mask) = _split_back_
 
 
 // Packing
-object_list = ["stringing", "overhang", "peg_hole", "bridging", "tolerance", "sphere", "accuracy", "text"];
+object_list = ["stringing", "overhang", "peg_hole", "bridging", "tolerance", "sphere", "accuracy", "text", "chimney"];
 object_sizes = [stringing_test_size, overhang_test_size, peg_hole_test_size, bridging_test_size, tolerance_test_size, sphere_test_size, accuracy_test_size, text_test_size];
 mask = [pack_stringing == true ? 1:0, pack_overhang == true ? 1:0, pack_peg_hole == true ? 1:0, pack_bridging == true ? 1:0, pack_tolerance == true ? 1:0, pack_sphere == true ? 1:0, pack_accuracy == true ? 1:0, pack_text == true ? 1:0];
 
@@ -308,6 +325,10 @@ module place_debug(test_type){
 	if (test_type == "text") {
 		color(color_scheme[7%len(color_scheme)]) text_test();
 		%cube([text_test_size[0], text_test_size[1], text_test_size[2]]);
+	}
+	if (test_type == "chimney") {
+		color(color_scheme[8%len(color_scheme)]) chimney_test();
+		%cube([chimney_test_size[0], chimney_test_size[1], chimney_test_size[2]]);
 	}
 }
 
@@ -549,6 +570,10 @@ module place_with_bottom(test_type) {
 			test_bottom_layers*layer_height
 		]);
 
+	}
+	if (test_type == "chimney") {
+		c = color_scheme[8%len(color_scheme)];
+		color(c) chimney_test();
 	}
 	if (test_type == "common") {
 		place_with_bottom("stringing");
