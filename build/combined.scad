@@ -17,7 +17,7 @@ detail_level=64; // 5
 // Preview mode (Reduces arc segments to 16 for faster rendering. TURN OFF BEFORE EXPORTING)
 preview_mode = false;
 // Test type
-test_type = "common"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text, bed_level]
+test_type = "common"; // [common, stringing, overhang, peg_hole, bridging, tolerance, sphere, accuracy, text, chimney, bed_level]
 // Color scheme, see en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#color for available colors
 color_scheme = ["red", "green", "blue", "cyan", "magenta", "yellow", "darkorange", "lime", "steelblue"];
 
@@ -44,6 +44,8 @@ pack_sphere = true;
 pack_accuracy = true;
 // Enable text size 
 pack_text = true;
+// Enable chimney
+pack_chimney = true;
 
 /* [Stringing test settings] */
 // Number of towers in X
@@ -176,6 +178,22 @@ ts_adv_font = "Liberation Mono:style=Regular";
 ts_adv_width_scaling = 0.835; //0.005
 // Height scaling factor (You should not need to change this, afaik actual text height is always 1.5 times the size)
 ts_adv_height_scaling = 1.5; //0.005
+
+/* [Chimney test settings] */
+// Chimney base height (layers)
+chimney_base_height = 10; // 1
+// Chimney top height (layers)
+chimney_top_height = 5; // 1
+// Chimney base wall thickness (extrusions)
+chimney_base_wall_thickness = 4; // 1
+// Chimney top extra thickness (extrusions)
+chimney_top_extra_thickness = 2; // 1
+// Chimney hole start diameter (mm)
+chimney_hole_start_diameter = 1; // 1
+// Chimney hole end diameter (mm)
+chimney_hole_end_diameter = 5; // 1
+// Chimney hole diameter step (mm)
+chimney_hole_diameter_step = 1; // 1
 
 
 /* [Bed level test settings] */
@@ -710,6 +728,70 @@ text_test_size = [
 ];
 
 /* END text-test.scad*/
+/* START chimney-test.scad*/
+// /* [Chimney test settings] */
+// // Chimney base height (layers)
+// chimney_base_height = 10; // 1
+// // Chimney top height (layers)
+// chimney_top_height = 5; // 1
+// // Chimney base wall thickness (extrusions)
+// chimney_base_wall_thickness = 4; // 1
+// // Chimney top extra thickness (extrusions)
+// chimney_top_extra_thickness = 2; // 1
+// // Chimney hole start diameter (mm)
+// chimney_hole_start_diameter = 3; // 1
+// // Chimney hole end diameter (mm)
+// chimney_hole_end_diameter = 12; // 1
+// // Chimney hole diameter step (mm)
+// chimney_hole_diameter_step = 3; // 1
+
+
+module chimney_single(diameter) {
+	difference(){
+		union(){
+			cylinder(h=chimney_base_height*layer_height, d=diameter+chimney_base_wall_thickness*extrusion_width*2);
+			translate([0,0,chimney_base_height*layer_height]){
+				cylinder(h=chimney_top_height*layer_height, d=diameter+(chimney_top_extra_thickness+chimney_base_wall_thickness)*extrusion_width*2);
+			}
+		}
+		translate([0,0,-slice_gap_closing_radius/2])
+		cylinder(h=(chimney_top_height+chimney_base_height)*layer_height+slice_gap_closing_radius, d=diameter);
+	}
+}
+
+module chimney_test(){
+	translate([
+		(chimney_hole_start_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2)/2,
+		(chimney_hole_end_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2)/2,
+		0
+	])
+	for (i= [0:1:(chimney_hole_end_diameter-chimney_hole_start_diameter)/chimney_hole_diameter_step]){
+		translate([
+			gaussian_sum_with_step(chimney_hole_start_diameter+chimney_hole_diameter_step, chimney_hole_start_diameter+chimney_hole_diameter_step*i, chimney_hole_diameter_step)
+				-(chimney_hole_start_diameter/2)*i
+				+i*(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2
+				+test_padding*extrusion_width*i
+			,0,
+			0
+		]){
+			chimney_single(chimney_hole_start_diameter+chimney_hole_diameter_step*i);
+		}
+	}
+}
+
+_i = (chimney_hole_end_diameter-chimney_hole_start_diameter)/chimney_hole_diameter_step;
+
+_chimney_size_x = (chimney_hole_start_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2)/2
+	+ gaussian_sum_with_step(chimney_hole_start_diameter+chimney_hole_diameter_step, chimney_hole_start_diameter+chimney_hole_diameter_step*_i, chimney_hole_diameter_step)
+				-(chimney_hole_start_diameter/2)*_i
+				+_i*(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2
+				+test_padding*extrusion_width*_i;
+
+chimney_test_size = [
+	_chimney_size_x+(chimney_hole_end_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2)/2,
+	chimney_hole_end_diameter+(chimney_base_wall_thickness+chimney_top_extra_thickness)*extrusion_width*2,
+	(chimney_base_height+chimney_top_height)*layer_height
+];/* END chimney-test.scad*/
 /* START bed-level-test.scad*/
 module bed_level_test(){
 	do_spots = bed_level_test_mode == "spot" || bed_level_test_mode == "both";
@@ -766,10 +848,56 @@ module bed_level_test(){
 
 
 // ========== Helper Functions ==========
-function largest_in_blocker_array_x(arr) = max([for (i = [0:len(arr)-1]) arr[i][1][0]]);
-function smallest_in_blocker_array_x(arr) = min([for (i = [0:len(arr)-1]) arr[i][0][0]]);
-function largest_in_blocker_array_y(arr) = max([for (i = [0:len(arr)-1]) arr[i][1][1]]);
-function smallest_in_blocker_array_y(arr) = min([for (i = [0:len(arr)-1]) arr[i][0][1]]);
+// Blocker array: [[[-x,-y],[+x,+y]], ...]
+
+function largest_in_blocker_array_x(arr, object_size) = max(
+	[
+		for (i = [0:len(arr)-1]) 
+			abs(arr[i][0][1])!=abs(arr[i][1][1]) 
+			&& object_size[1]/2 < min(abs(arr[i][0][1]),abs(arr[i][1][1]))
+			?
+			0
+			:
+			arr[i][1][0]
+		
+	]
+);
+
+function smallest_in_blocker_array_x(arr, object_size) = min(
+	[
+		for (i = [0:len(arr)-1]) 
+			abs(arr[i][0][1])!=abs(arr[i][1][1]) 
+			&& object_size[1]/2 < min(abs(arr[i][0][1]),abs(arr[i][1][1]))
+			?
+			0
+			:
+			arr[i][0][0]
+	]
+);
+
+function largest_in_blocker_array_y(arr,object_size) = max(
+	[
+		for (i = [0:len(arr)-1]) 
+			abs(arr[i][0][0])!=abs(arr[i][1][0]) 
+			&& object_size[0]/2 < min(abs(arr[i][0][0]),abs(arr[i][1][0]))
+			?
+			0
+			:
+			arr[i][1][1]
+	]
+);
+
+function smallest_in_blocker_array_y(arr,object_size) = min(
+	[
+		for (i = [0:len(arr)-1]) 
+			abs(arr[i][0][0])!=abs(arr[i][1][0]) 
+			&& object_size[0]/2 < min(abs(arr[i][0][0]),abs(arr[i][1][0]))
+			?
+			0
+			:
+			arr[i][0][1]
+	]
+);
 
 /* 
 	* Adjusted gaussian sum:
@@ -829,9 +957,9 @@ function sort_objects_descending(object_list, object_sizes, mask) = _split_back_
 
 
 // Packing
-object_list = ["stringing", "overhang", "peg_hole", "bridging", "tolerance", "sphere", "accuracy", "text"];
-object_sizes = [stringing_test_size, overhang_test_size, peg_hole_test_size, bridging_test_size, tolerance_test_size, sphere_test_size, accuracy_test_size, text_test_size];
-mask = [pack_stringing == true ? 1:0, pack_overhang == true ? 1:0, pack_peg_hole == true ? 1:0, pack_bridging == true ? 1:0, pack_tolerance == true ? 1:0, pack_sphere == true ? 1:0, pack_accuracy == true ? 1:0, pack_text == true ? 1:0];
+object_list = ["stringing", "overhang", "peg_hole", "bridging", "tolerance", "sphere", "accuracy", "text", "chimney"];
+object_sizes = [stringing_test_size, overhang_test_size, peg_hole_test_size, bridging_test_size, tolerance_test_size, sphere_test_size, accuracy_test_size, text_test_size, chimney_test_size];
+mask = [pack_stringing == true ? 1:0, pack_overhang == true ? 1:0, pack_peg_hole == true ? 1:0, pack_bridging == true ? 1:0, pack_tolerance == true ? 1:0, pack_sphere == true ? 1:0, pack_accuracy == true ? 1:0, pack_text == true ? 1:0, pack_chimney == true ? 1:0];
 
 module place_debug(test_type){
 	if (test_type == "stringing"){
@@ -866,6 +994,10 @@ module place_debug(test_type){
 		color(color_scheme[7%len(color_scheme)]) text_test();
 		%cube([text_test_size[0], text_test_size[1], text_test_size[2]]);
 	}
+	if (test_type == "chimney") {
+		color(color_scheme[8%len(color_scheme)]) chimney_test();
+		%cube([chimney_test_size[0], chimney_test_size[1], chimney_test_size[2]]);
+	}
 }
 
 module debug_blocker(blocker, object_size){
@@ -889,15 +1021,15 @@ module pack_objects(object_list, object_sizes, blockers, masks){
 	masks_new = len(masks) > 1 ? [for (i=[1:len(masks)-1]) masks[i]] : [];
 
 	if (mask == 0) {
-		// echo("Object is not to be placed");
+		echo("Object is not to be placed");
 		if (is_list(object_list_new) && len(object_list_new) > 0) {
 			pack_objects(object_list_new, object_sizes_new, blockers, masks_new);
 		}
 	}
 	else {
-		// echo(str("Placing Object: ", object, "; Size: ", object_size, "; Mask: ", mask));
+		echo(str("Placing Object: ", object, "; Size: ", object_size, "; Mask: ", mask));
 		if (len(blockers) == 0 || is_undef(blockers)) {
-			// echo("No blockers, placing object in center");
+			echo("No blockers, placing object in center");
 			object_blockers = [
 				[-object_size[0]/2-test_padding*extrusion_width/2,-object_size[1]/2-test_padding*extrusion_width/2],
 				[object_size[0]/2+test_padding*extrusion_width/2,object_size[1]/2+test_padding*extrusion_width/2]
@@ -919,10 +1051,10 @@ module pack_objects(object_list, object_sizes, blockers, masks){
 			// Pack object as close to middle as possible without intersecting blockers
 			direction = (pack_rotation+len(object_list)) % 4;
 
-			largest_x = largest_in_blocker_array_x(blockers);
-			smallest_x = smallest_in_blocker_array_x(blockers);
-			largest_y = largest_in_blocker_array_y(blockers);
-			smallest_y = smallest_in_blocker_array_y(blockers);
+			largest_x = largest_in_blocker_array_x(blockers, object_size);
+			smallest_x = smallest_in_blocker_array_x(blockers, object_size);
+			largest_y = largest_in_blocker_array_y(blockers,object_size);
+			smallest_y = smallest_in_blocker_array_y(blockers,object_size);
 
 			if (direction == 0) {
 				// +X
@@ -1106,6 +1238,23 @@ module place_with_bottom(test_type) {
 			test_bottom_layers*layer_height
 		]);
 
+	}
+	if (test_type == "chimney") {
+		c = color_scheme[8%len(color_scheme)];
+		color(c)
+		translate([0,0,test_bottom_layers*layer_height])
+		chimney_test();
+		color(c)
+		translate([
+			-test_padding/2*extrusion_width,
+			-test_padding/2*extrusion_width,
+			0
+		])
+		cube([
+			chimney_test_size[0]+test_padding*extrusion_width,
+			chimney_test_size[1]+test_padding*extrusion_width,
+			test_bottom_layers*layer_height
+		]);
 	}
 	if (test_type == "common") {
 		place_with_bottom("stringing");
