@@ -68,6 +68,7 @@ This test generates very small pegs and holes to test how well you are able to r
 ![tolerance](build/img/tolerance.png)
 
 **If you encounter issues or warnings with this test, please read the disclaimer above.**
+Note: with tolerance x the actual size of the hole will be 2x the tolerance. This is because the tolerance is applied to both sides of the hole.
 - mode: Select between cube, cylinder or both
 - start: Start tolerance
 - end: End tolerance
