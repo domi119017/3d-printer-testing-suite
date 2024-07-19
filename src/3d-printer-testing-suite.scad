@@ -736,3 +736,5 @@ if ((sphere_test_start/sphere_test_step)%1 != 0 || (sphere_test_end/sphere_test_
 if ((sphere_test_end/sphere_test_start)%1 != 0) {
 	echo("WARNING: Sphere test end is not divisible by start, the test might use too much space for the bottom layers.");
 }
+
+// This is a comment for testing sync
